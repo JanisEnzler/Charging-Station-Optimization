@@ -14,23 +14,6 @@ class Chargingstation:
         if car.battery_level < car.battery_capacity:
             car.battery_level = car.battery_capacity
             return True
-    
-    #simulates the charging process, with a given time in hours and a car object
-    def simulate_charging(self, car, delta_time):
-        #charging_speed is the amount of battery_level increase per hour7
-        if car.battery_level < car.battery_capacity:
-            car.battery_level += self.charging_speed * delta_time * self.calculate_charging_efficiency(car)
-            #if battery_level exceeds capacity, set it to capacity
-            if car.battery_level > car.battery_capacity:
-                car.battery_level = car.battery_capacity
-            return True
-        return False
-
-    # calculates the charging efficiency, based on battery_level, capacity and charging_speed
-    def calculate_charging_efficiency(self, car):
-        # Replace with actuall efficiency curve
-        efficiency = 1 - 0.3 * (car.battery_level/car.battery_capacity)
-        return efficiency
 
 
 
