@@ -2,7 +2,9 @@
 class PriceCalculation:
     #static method to calculate price
     @staticmethod
-    def calculate_price(efficiency, availability, reservation, electricity_cost):
-        return (efficiency * availability * reservation * electricity_cost) / 100
-    
-    calculate_price(90, 95, 98, 0.12) # 0.1026
+    def calculate_price(standard_rate, efficiency, availability, reservation, electricity_cost):
+
+        calculated_price = (standard_rate+efficiency * availability * reservation * electricity_cost) / 100
+        return calculated_price
+
+print(PriceCalculation.calculate_price(10, 0.9, 0.8, 0.9, 0.12)) # 0.0864

@@ -14,6 +14,16 @@ class Chargingstation:
         if car.battery_level < car.battery_capacity:
             car.battery_level = car.battery_capacity
             return True
+        
+
+    def availability(self):
+        return True
+    
+    #customer can book a slot in the charging station
+    def reservation(self):
+        return True
+    
+    
 
 
 
