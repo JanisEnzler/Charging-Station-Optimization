@@ -6,9 +6,14 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import math
+import configparser
+
+config = configparser.ConfigParser()
+config.read('config.ini')
 
 # Charging power of station in watts
-charging_power = 200000
+CHARGING_POWER = config.getint('charging_station', 'CHARGING_POWER_IN_WATTS')
+NUMBER_OF_CHARGING_STATIONS = config.getint('charging_station', 'NUMBER_OF_CHARGING_STATIONS')
 
 # First the customers are sorted by arrival time
 df = pd.read_csv('customers.csv')
@@ -27,9 +32,21 @@ def calculate_duration(current_battery_level, target_battery_level, charging_spe
     # Duration is in hours, because capacity is in watt-hours, but we want rounded minutes
     return math.ceil(duration_in_hours * 60)
 
+'''
+#find the nearest charging station
+linear search algorithm 
+def find_nearest_charging_station():
+    nearest_charging_station = 0
+    for i in range(NUMBER_OF_CHARGING_STATIONS):
+        if availability[i] == 0:
+            nearest_charging_station = i
+            break
+    return nearest_charging_station
+'''
+
 
 for row in df_sorted.iterrows():
-    charging_dur = calculate_duration(row[1]['current_battery_level'], row[1]['target_battery_level'], charging_power)
+    charging_dur = calculate_duration(row[1]['current_battery_level'], row[1]['target_battery_level'], CHARGING_POWER)
     arrival_time = row[1]['arrival_time_in_minutes']
     waiting_time = row[1]['waiting_time_in_minutes']
     # If the station is empty at arrival the customer takes the station and charges his car
