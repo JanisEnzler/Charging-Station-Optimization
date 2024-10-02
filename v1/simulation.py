@@ -37,7 +37,7 @@ def calculate_duration(current_battery_level, target_battery_level, charging_spe
 def schedule_charging(start_time, duration, waiting_time):
     for station in schedule:
         # Check if a particular station is available, within the waiting time tolerance
-        for i in range(start_time, start_time + waiting_time):
+        for i in range(start_time, start_time + waiting_time+1):
             if(i >= len(station)):
                 # Only one day is simulated, so if the waiting time crosses midnight we break the for loop
                 break
@@ -49,6 +49,7 @@ def schedule_charging(start_time, duration, waiting_time):
                         return True
                     station[j] = 1
                 return True
+    print(start_time, duration, waiting_time)
     return False
 
 schedule_charging(1,1,1)
