@@ -52,8 +52,6 @@ def schedule_charging(start_time, duration, waiting_time):
     print(start_time, duration, waiting_time)
     return False
 
-schedule_charging(1,1,1)
-
 for row in df_sorted.iterrows():
     charging_dur = calculate_duration(row[1]['current_battery_level'], row[1]['target_battery_level'], CHARGING_POWER)
     arrival_time = row[1]['arrival_time_in_minutes']
@@ -67,7 +65,41 @@ def get_utilization_stats():
     return np.sum(schedule_matrix, axis=0)
 
 
+# Define a custom function to format x-axis labels
+def format_time(x, pos):
+    hours = int(x // 60)
+    minutes = int(x % 60)
+    return f'{hours:02d}:{minutes:02d}'
+
+
+formatter = plt.FuncFormatter(format_time)
+
+# TODO Code repetition for the following there plots should be removed
+df_sorted['arrival_time_in_minutes'].plot(kind='hist', bins=24, label='arrival_time_in_minutes', range=(0,24*60))
+plt.xlabel('Time of Day')
+plt.ylabel('Frequency')
+plt.title('Customers by Time of Day')
+plt.gca().xaxis.set_major_formatter(formatter)
+plt.gca().xaxis.set_major_locator(plt.MultipleLocator(240))
+plt.show()
+
 plt.plot(get_utilization_stats())
+plt.xlabel('Time of Day')
+plt.ylabel('Number of Stations in Use')
+plt.title('Station utilization')
+plt.gca().xaxis.set_major_formatter(formatter)
+plt.gca().xaxis.set_major_locator(plt.MultipleLocator(240))
 plt.show()
-plt.hist(unserved_customers, bins=24, range=(0,24*60))
+
+plt.hist(unserved_customers, bins=24, range=(0, 24 * 60))
+plt.xlabel('Time of Day')
+plt.ylabel('Frequency')
+plt.title('Customers by Time of Day')
+plt.gca().xaxis.set_major_formatter(formatter)
+plt.gca().xaxis.set_major_locator(plt.MultipleLocator(240))
 plt.show()
+
+
+
+
+
