@@ -11,6 +11,7 @@ MEAN_ARRIVAL_TIME = config.getint('customer', 'MEAN_ARRIVAL_TIME_IN_MINUTES')
 STD_DEV_ARRIVAL_TIME = config.getint('customer', 'STD_DEV_ARRIVAL_TIME_IN_MINUTES')
 MAX_WAITING_TIME = config.getint('customer', 'MAX_WAITING_TIME_IN_MINUTES')
 
+
 # Creating a normal distribution of Timeslots for Customers, centered at 13:00
 arrival_times_in_minutes = np.random.normal(loc=MEAN_ARRIVAL_TIME, scale=STD_DEV_ARRIVAL_TIME, size=NUMBER_OF_CUSTOMERS).astype(int)
 
@@ -25,7 +26,6 @@ battery_capacity = 50000
 
 # We assume that people wanting to charge have a battery level between 10% and 60%
 current_battery_level = np.random.randint(low=5000, high=30000, size=NUMBER_OF_CUSTOMERS)
-
 
 
 # Create a DataFrame with the times
