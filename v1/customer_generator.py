@@ -37,6 +37,10 @@ df['current_battery_level'] = current_battery_level
 
 # We assume that people want to charge their battery somewhere between adding 10% to fully charging it
 df['target_battery_level'] = np.random.randint(low=df['current_battery_level']+5000, high=df['battery_capacity'])
+df['soc'] = (df['current_battery_level']/df['battery_capacity'])
+
+
+
 
 df.to_csv('customers.csv', index=False)
 print(df.head())
