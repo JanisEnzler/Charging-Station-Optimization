@@ -7,6 +7,7 @@ class CustomerState(Enum):
     NOT_ARRIVED = 1
     WAITING = 2
     CHARGING = 3
+    LEFT_STATION = 4
     
       
 class CustomerAgent(mesa.Agent):
@@ -28,27 +29,52 @@ class CustomerAgent(mesa.Agent):
         match self.state:
             case CustomerState.NOT_ARRIVED:
                 if self.arrival_time_in_minutes == self.model.schedule.time:
-                #print("Customer with ID: ", self.unique_id, " is starting to charge at : ", self.arrival_time_in_minutes)
-                    if(self.model.charging_station.occupy_spot(self.unique_id)):
-                        self.state = CustomerState.CHARGING
-                        print(f'occupied by: {self.unique_id}')
-                    else:
-                        self.state = CustomerState.WAITING
-                        print(f'{self.unique_id} is waiting!')
+                    self.arrival()
             case CustomerState.WAITING:
-                pass
+                self.wait()
             case CustomerState.CHARGING:
+                self.charge()
+            case CustomerState.LEFT_STATION:
                 pass
+
+
+    def arrival(self):
+        if(self.model.charging_station.occupy_spot(self.unique_id)):
+            self.state = CustomerState.CHARGING
+            print(f'occupied by: {self.unique_id}')
+        else:
+            self.state = CustomerState.WAITING
+            print(f'{self.unique_id} is waiting!')
+
 
     def negotiate(self):
-        # Negotiation with the charging station
-        pass
+        self.state = CustomerState.WAITING
+
 
     def charge(self):
-        # Charging the car
-        pass
+        # TODO Simulate charging here
+        
+        #Temp
+        self.current_battery_level += self.model.station_power/60
+        if (self.current_battery_level > self.battery_capacity):
+            current_battery_level = self.battery_capacity
+        #Temp
+        
+        if(self.current_battery_level >= self.target_battery_level):
+            if (self.model.charging_station.release_spot(self.unique_id)):
+                self.state = CustomerState.LEFT_STATION
+                print(f'Customer {self.unique_id} left after charging his car for {self.model.schedule.time - self.arrival_time_in_minutes} minutes.')
+            else:
+                # TODO Replace with acutall error
+                print('ERROR: Customer was charging without occuping station')
+
+            
+
 
     def wait(self):
-        # Waiting for the station to be available
-        # if the negotiation failed, the customer can choose between waiting (queue) or he might leave, if the waiting time exceeds the MAX_WAITING_TIME_IN_MINUTES
-        pass
+        if(self.model.charging_station.occupy_spot(self.unique_id)):
+            self.state = CustomerState.CHARGING
+            print(f'occupied by: {self.unique_id}')
+        elif(self.model.schedule.time - self.arrival_time_in_minutes >= self.waiting_time_in_minutes):
+            self.state = CustomerState.LEFT_STATION
+            print(f'Customer {self.unique_id} left after waiting for {self.model.schedule.time - self.arrival_time_in_minutes} minutes.')

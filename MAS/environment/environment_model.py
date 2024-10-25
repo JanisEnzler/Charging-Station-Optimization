@@ -9,16 +9,18 @@ from MAS.entities.charging_station import ChargingStation
 
 class Environment_Model(mesa.Model):
 
-    def __init__(self, num_charge_spots):
+    def __init__(self, num_charge_spots, station_power):
         super().__init__()
 
-        self.schedule = mesa.time.RandomActivation(self)
+        self.schedule = mesa.time.BaseScheduler(self)
         self.charging_station = ChargingStation(num_charge_spots)
+        self.station_power = station_power
 
         df = pd.read_csv('customers.csv')
-
-        for row in df.iterrows():
-            a = CustomerAgent(row[0]+1, self, row[1]['arrival_time_in_minutes'], row[1]['waiting_time_in_minutes'], row[1]['battery_capacity'], row[1]['current_battery_level'], row[1]['target_battery_level'])
+        df_sorted = df.sort_values(by='arrival_time_in_minutes', ascending=True)
+    
+        for row in df_sorted.iterrows():
+            a = CustomerAgent(row[0]+1, self, row[1]['arrival_time_in_minutes'], row[1]['waiting_time_in_minutes'], row[1]['battery_capacity'], row[1]['current_battery_level'], row[1]['target_battery_level'], row[1]['soc'])
             self.schedule.add(a)
 
 
