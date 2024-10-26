@@ -41,7 +41,7 @@ class CustomerAgent(mesa.Agent):
 
 
     def arrival(self):
-        if(self.model.charging_station.occupy_spot(self.unique_id)):
+        if(self.model.charging_station.occupy_spot(self)):
             self.state = CustomerState.CHARGING
             print(f'occupied by: {self.unique_id}')
         else:
@@ -59,6 +59,25 @@ class CustomerAgent(mesa.Agent):
 
     def charge(self):
         # TODO Simulate charging here
+        I = self.model.station_power/self.ocv
+        if self.soc < 1:
+            while self.ocv < 4.2:
+                print(f'Customer {self.unique_id} is CC charging')
+                self.ocv += 0.1
+                print(self.ocv)
+                if self.ocv > 4.2:
+                    self.ocv = 4.2 #keep it at 4.2V
+                print(f'Customer {self.unique_id} is not at {self.ocv} OCV')
+
+            while self.ocv >= 4.2 and I > 0.01: #cv charging
+                #print(f'Customer {self.unique_id} is CV charging')
+                #keep voltage at 4.2V and decrease current until threshold is reached
+                I = I*0.99
+                #print(f'Current {I}')
+            print(f'Customer {self.unique_id} is fully charged')
+        else:
+            print("no Charging needed")
+
         
         #Temp
         self.current_battery_level += self.model.station_power/60
@@ -67,7 +86,7 @@ class CustomerAgent(mesa.Agent):
         #Temp
         
         if(self.current_battery_level >= self.target_battery_level):
-            if (self.model.charging_station.release_spot(self.unique_id)):
+            if (self.model.charging_station.release_spot(self)):
                 self.state = CustomerState.LEFT_STATION
                 print(f'Customer {self.unique_id} left after charging his car for {self.model.schedule.time - self.arrival_time_in_minutes} minutes.')
             else:
@@ -76,7 +95,7 @@ class CustomerAgent(mesa.Agent):
 
     
     def wait(self):
-        if(self.model.charging_station.occupy_spot(self.unique_id)):
+        if(self.model.charging_station.occupy_spot(self)):
             self.state = CustomerState.CHARGING
             print(f'occupied by: {self.unique_id}')
         elif(self.model.schedule.time - self.arrival_time_in_minutes >= self.waiting_time_in_minutes):
@@ -85,12 +104,11 @@ class CustomerAgent(mesa.Agent):
 
 
     def evaluateSpotReleaseForBonus(self):
-        pass
+        self.discount_per_kwh = ((self.model.provider.skip_queue_price - self.model.provider.skip_queue_provider_cut) /(self.target_battery_level - self.current_battery_level))
+        return (self.discount_per_kwh >= self.minimum_discount_per_kwh)
+   
 
     def evaluateSkipQueueForExtraPayment(self):
         # Calculate how much the extra payment would affect the cost per kwh for the amount the customer wants to charge
         self.extra_per_kwh = (self.model.provider.skip_queue_price /(self.target_battery_level - self.current_battery_level))
-        if (self.extra_per_kwh <= self.willingness_to_pay_extra_per_kwh):
-            return True
-        else:
-            return False
+        return (self.extra_per_kwh <= self.willingness_to_pay_extra_per_kwh)

@@ -1,6 +1,7 @@
 import numpy as np
 
 
+
 battery_capacity = 50_000 # 50 kW
 ocv = #given from ocv-soc_relationship.py
 P = 50_000 # 50 kW given from charging station

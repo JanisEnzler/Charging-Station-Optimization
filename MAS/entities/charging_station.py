@@ -4,16 +4,16 @@ class ChargingStation:
         self.occupied_spots = []
         
 #customer_id 
-    def occupy_spot(self, customer_id):
-        if len(self.occupied_spots) < self.charging_spots and customer_id not in self.occupied_spots:
-            self.occupied_spots.append(customer_id)
+    def occupy_spot(self, customer):
+        if len(self.occupied_spots) < self.charging_spots and customer not in self.occupied_spots:
+            self.occupied_spots.append(customer)
             return True
         else:
             return False
         
-    def release_spot(self, customer_id):
-        if customer_id in self.occupied_spots:
-            self.occupied_spots.remove(customer_id)
+    def release_spot(self, customer):
+        if customer in self.occupied_spots:
+            self.occupied_spots.remove(customer)
             return True
         else:
             return False

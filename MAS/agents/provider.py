@@ -11,11 +11,11 @@ class ProviderAgent(mesa.Agent):
         self.earnings = 0
         self.kwh_cunsumed = 0
 
-    def request_skip_queue():
-        pass
+    def request_skip_queue(self):
+        for Customer in self.model.charging_station.occupied_spots:
+            pass
 
 
-    def request_release():
-        pass
+    
 
     
