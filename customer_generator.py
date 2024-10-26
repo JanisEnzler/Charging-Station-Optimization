@@ -7,6 +7,12 @@ from scipy import interpolate
 config = configparser.ConfigParser()
 config.read('config.ini')
 
+# We have two customer profiles, 
+# - PRIORITY_CHARGERS are customers how are willing to pay extra if the can charge their car faster, and dont have to wait in queue as long as others:
+# - FLEXIBLE_CHARGERS would be willing to release a spot and finish charging at another time of day, if the would get better prices.
+
+
+
 NUMBER_OF_CUSTOMERS = config.getint('customer', 'NUMBER_OF_CUSTOMERS')
 MEAN_ARRIVAL_TIME = config.getint('customer', 'MEAN_ARRIVAL_TIME_IN_MINUTES')
 STD_DEV_ARRIVAL_TIME = config.getint('customer', 'STD_DEV_ARRIVAL_TIME_IN_MINUTES')
@@ -39,10 +45,17 @@ customer_df['current_battery_level'] = current_battery_level
 
 # We assume that people want to charge their battery somewhere between adding 10% to fully charging it
 customer_df['target_battery_level'] = np.random.randint(low=customer_df['current_battery_level']+5000, high=customer_df['battery_capacity'])
+
+# Each customer has an amount of Money he would be willing to pay extra for a kilowatt hour (between 0 and 0.1 CHF), if the could skip the queue 
+customer_df['willingness_to_pay_extra_per_kwh'] = np.random.randint(low=0, high=11, size=NUMBER_OF_CUSTOMERS)/100
+
+# Each customer has an discount per kilowatt hour threshold with which he would be willing to release his spot and charge at another time (between 0.05 and 0.15 CHF)
+customer_df['minimum_discount_per_kwh'] = np.random.randint(low=5, high=16, size=NUMBER_OF_CUSTOMERS)/100
+
 customer_df['soc'] = (customer_df['current_battery_level']/customer_df['battery_capacity'])
 
 
-
+#relationship between OCV and SOC
 ocv_df = {
     "U_OCV": [4.1617, 4.0913, 4.0749, 4.0606, 4.0153, 3.9592, 3.9164, 3.8687, 
               3.8163, 3.7735, 3.7317, 3.6892, 3.6396, 3.5677, 3.5208, 3.4712, 
