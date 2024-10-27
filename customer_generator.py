@@ -32,8 +32,8 @@ waiting_times_in_minutes = np.random.randint(low=0, high=MAX_WAITING_TIME, size=
 # Battery capacity (for now 50kw/h or 50000w/h for all cars)
 battery_capacity = 50000
 
-# We assume that people wanting to charge have a battery level between 10% and 60%
-current_battery_level = np.random.randint(low=5000, high=30000, size=NUMBER_OF_CUSTOMERS)
+# We assume that people wanting to charge have a battery level between 10% and 40%
+current_battery_level = np.random.randint(low=5000, high=20000, size=NUMBER_OF_CUSTOMERS)
 
 
 # Create a DataFrame with the times
@@ -43,11 +43,11 @@ customer_df['waiting_time_in_minutes'] = waiting_times_in_minutes
 customer_df['battery_capacity'] = battery_capacity
 customer_df['current_battery_level'] = current_battery_level
 
-# We assume that people want to charge their battery somewhere between adding 10% to fully charging it
-customer_df['target_battery_level'] = np.random.randint(low=customer_df['current_battery_level']+5000, high=customer_df['battery_capacity'])
+# We assume that people want to charge their battery somewhere between adding 30% to fully charging it
+customer_df['target_battery_level'] = np.random.randint(low=customer_df['current_battery_level']+15000, high=customer_df['battery_capacity'])
 
-# Each customer has an amount of Money he would be willing to pay extra for a kilowatt hour (between 0 and 0.1 CHF), if the could skip the queue 
-customer_df['willingness_to_pay_extra_per_kwh'] = np.random.randint(low=0, high=11, size=NUMBER_OF_CUSTOMERS)/100
+# Each customer has an amount of Money he would be willing to pay extra for a kilowatt hour (between 0.05 and 0.2 CHF), if the could skip the queue 
+customer_df['willingness_to_pay_extra_per_kwh'] = np.random.randint(low=5, high=21, size=NUMBER_OF_CUSTOMERS)/100
 
 # Each customer has an discount per kilowatt hour threshold with which he would be willing to release his spot and charge at another time (between 0.05 and 0.15 CHF)
 customer_df['minimum_discount_per_kwh'] = np.random.randint(low=5, high=16, size=NUMBER_OF_CUSTOMERS)/100

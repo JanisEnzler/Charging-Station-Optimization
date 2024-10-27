@@ -18,4 +18,6 @@ model = Environment_Model(NUMBER_OF_CHARGING_STATIONS, CHARGING_POWER, SKIP_QUEU
 for i in range(1440):
     model.step()
 
+model.provider.show_stats()
+
 

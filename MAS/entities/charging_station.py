@@ -17,3 +17,11 @@ class ChargingStation:
             return True
         else:
             return False
+        
+    def swap_spot(self, customer1, customer2):
+        if customer1 in self.occupied_spots and customer2 not in self.occupied_spots:
+            self.occupied_spots.remove(customer1)
+            self.occupied_spots.append(customer2)
+            return True
+        else:
+            return False
