@@ -3,7 +3,6 @@ class ChargingStation:
         self.charging_spots = charging_spots
         self.occupied_spots = []
         
-#customer_id 
     def occupy_spot(self, customer):
         if len(self.occupied_spots) < self.charging_spots and customer not in self.occupied_spots:
             self.occupied_spots.append(customer)

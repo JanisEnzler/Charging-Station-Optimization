@@ -13,46 +13,11 @@ config.read('config.ini')
 
 
 
-NUMBER_OF_CUSTOMERS = config.getint('customer', 'NUMBER_OF_CUSTOMERS')
+NUMBER_OF_CUSTOMERS_PER_DAY = config.getint('customer', 'NUMBER_OF_CUSTOMERS_PER_DAY')
 MEAN_ARRIVAL_TIME = config.getint('customer', 'MEAN_ARRIVAL_TIME_IN_MINUTES')
 STD_DEV_ARRIVAL_TIME = config.getint('customer', 'STD_DEV_ARRIVAL_TIME_IN_MINUTES')
 MAX_WAITING_TIME = config.getint('customer', 'MAX_WAITING_TIME_IN_MINUTES')
-
-
-
-# Creating a normal distribution of Timeslots for Customers, centered at 13:00
-arrival_times_in_minutes = np.random.normal(loc=MEAN_ARRIVAL_TIME, scale=STD_DEV_ARRIVAL_TIME, size=NUMBER_OF_CUSTOMERS).astype(int)
-
-# Ensure all times fall within the 24-hour range (0 to 1439 minutes)
-arrival_times_in_minutes = np.mod(arrival_times_in_minutes, 24 * 60)
-
-# generating max waiting times for customers
-waiting_times_in_minutes = np.random.randint(low=0, high=MAX_WAITING_TIME, size=NUMBER_OF_CUSTOMERS)
-
-# Battery capacity (for now 50kw/h or 50000w/h for all cars)
-battery_capacity = 50000
-
-# We assume that people wanting to charge have a battery level between 10% and 40%
-current_battery_level = np.random.randint(low=5000, high=20000, size=NUMBER_OF_CUSTOMERS)
-
-
-# Create a DataFrame with the times
-customer_df = pd.DataFrame()
-customer_df['arrival_time_in_minutes'] = arrival_times_in_minutes
-customer_df['waiting_time_in_minutes'] = waiting_times_in_minutes
-customer_df['battery_capacity'] = battery_capacity
-customer_df['current_battery_level'] = current_battery_level
-
-# We assume that people want to charge their battery somewhere between adding 30% to fully charging it
-customer_df['target_battery_level'] = np.random.randint(low=customer_df['current_battery_level']+15000, high=customer_df['battery_capacity'])
-
-# Each customer has an amount of Money he would be willing to pay extra for a kilowatt hour (between 0.05 and 0.2 CHF), if the could skip the queue 
-customer_df['willingness_to_pay_extra_per_kwh'] = np.random.randint(low=5, high=21, size=NUMBER_OF_CUSTOMERS)/100
-
-# Each customer has an discount per kilowatt hour threshold with which he would be willing to release his spot and charge at another time (between 0.05 and 0.15 CHF)
-customer_df['minimum_discount_per_kwh'] = np.random.randint(low=5, high=16, size=NUMBER_OF_CUSTOMERS)/100
-
-customer_df['soc'] = (customer_df['current_battery_level']/customer_df['battery_capacity'])
+NUMBER_OF_DAYS = config.getint('simulation', 'NUMBER_OF_DAYS')
 
 
 #relationship between OCV and SOC
@@ -66,13 +31,56 @@ ocv_df = {
 }
 
 
-interpolation = interpolate.interp1d(ocv_df["SOC"], ocv_df["U_OCV"], kind='linear', fill_value="extrapolate")
-current_ocv = interpolation(customer_df["soc"])
+final_df = pd.DataFrame()
 
 
-customer_df["ocv"] = np.round(current_ocv,4)
+for day in range(NUMBER_OF_DAYS):
+    print(f"Generating customers for day {day+1}/{NUMBER_OF_DAYS}")
+    # Creating a normal distribution of Timeslots for Customers, centered at 13:00
+    arrival_times_in_minutes = np.random.normal(loc=MEAN_ARRIVAL_TIME, scale=STD_DEV_ARRIVAL_TIME, size=NUMBER_OF_CUSTOMERS_PER_DAY).astype(int)
 
-customer_df.to_csv('customers.csv', index=False)
+    # Ensure all times fall within the 24-hour range (0 to 1439 minutes)
+    arrival_times_in_minutes = np.mod(arrival_times_in_minutes, 24 * 60)
+
+    arrival_times_in_minutes = arrival_times_in_minutes + day * 24 * 60
+
+    # generating max waiting times for customers
+    waiting_times_in_minutes = np.random.randint(low=0, high=MAX_WAITING_TIME, size=NUMBER_OF_CUSTOMERS_PER_DAY)
+
+    # Battery capacity (for now 50kw/h or 50000w/h for all cars)
+    battery_capacity = 50000
+
+    # We assume that people wanting to charge have a battery level between 10% and 40%
+    current_battery_level = np.random.randint(low=5000, high=20000, size=NUMBER_OF_CUSTOMERS_PER_DAY)
+
+    # Create a DataFrame with the times
+    customer_df = pd.DataFrame()
+    customer_df['arrival_time_in_minutes'] = arrival_times_in_minutes
+    customer_df['waiting_time_in_minutes'] = waiting_times_in_minutes
+    customer_df['battery_capacity'] = battery_capacity
+    customer_df['current_battery_level'] = current_battery_level
+
+    # We assume that people want to charge their battery somewhere between adding 30% to fully charging it
+    customer_df['target_battery_level'] = np.random.randint(low=customer_df['current_battery_level']+15000, high=customer_df['battery_capacity'])
+
+    # Each customer has an amount of Money he would be willing to pay extra for a kilowatt hour (between 0.05 and 0.2 CHF), if the could skip the queue 
+    customer_df['willingness_to_pay_extra_per_kwh'] = np.random.randint(low=5, high=21, size=NUMBER_OF_CUSTOMERS_PER_DAY)/100
+
+    # Each customer has an discount per kilowatt hour threshold with which he would be willing to release his spot and charge at another time (between 0.05 and 0.15 CHF)
+    customer_df['minimum_discount_per_kwh'] = np.random.randint(low=5, high=16, size=NUMBER_OF_CUSTOMERS_PER_DAY)/100
+
+    customer_df['soc'] = (customer_df['current_battery_level']/customer_df['battery_capacity'])
+
+
+    interpolation = interpolate.interp1d(ocv_df["SOC"], ocv_df["U_OCV"], kind='linear', fill_value="extrapolate")
+    current_ocv = interpolation(customer_df["soc"])
+    
+    customer_df["ocv"] = np.round(current_ocv,4)
+
+    final_df = pd.concat([final_df, customer_df], ignore_index=True)
+
+
+final_df.to_csv('customers.csv', index=False)
 
 
 

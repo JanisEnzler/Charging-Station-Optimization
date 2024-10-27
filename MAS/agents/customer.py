@@ -2,6 +2,7 @@ import mesa
 import numpy as np
 import pandas as pd
 from enum import Enum
+from MAS.environment.time_converter import TimeConverter
 
 class CustomerState(Enum):
     NOT_ARRIVED = 1
@@ -25,6 +26,7 @@ class CustomerAgent(mesa.Agent):
         self.minimum_discount_per_kwh = minimum_discount_per_kwh
         self.soc = soc
         self.ocv = ocv
+        self.timeConverter = TimeConverter()
 
 
     def step(self):
@@ -43,14 +45,14 @@ class CustomerAgent(mesa.Agent):
     def arrival(self):
         if(self.model.charging_station.occupy_spot(self)):
             self.state = CustomerState.CHARGING
-            print(f'Customer {self.unique_id} started charging his car.')
+            print(f'{self.timeConverter.convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} started charging his car.')
         elif(self.evaluateSkipQueueForExtraPayment()):
             if(self.model.provider.request_skip_queue(self)):
                 self.state = CustomerState.CHARGING
-                print(f'Customer {self.unique_id} skipped the queue, and is now charging.')
+                print(f'{self.timeConverter.convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} skipped the queue, and is now charging.')
         else:
             self.state = CustomerState.WAITING
-            print(f'Customer {self.unique_id} is waiting for a spot to charge.')
+            print(f'{self.timeConverter.convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} is waiting for a spot to charge.')
 
     def charge(self):
         
@@ -92,7 +94,7 @@ class CustomerAgent(mesa.Agent):
         if(self.current_battery_level >= self.target_battery_level):
             if (self.model.charging_station.release_spot(self)):
                 self.state = CustomerState.LEFT_STATION
-                print(f'Customer {self.unique_id} left after charging his car for {self.model.schedule.time - self.arrival_time_in_minutes} minutes.')
+                print(f'{self.timeConverter.convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} left after charging his car for {self.model.schedule.time - self.arrival_time_in_minutes} minutes.')
             else:
                 # TODO Replace with acutall error
                 # print('ERROR: Customer was charging without occuping station')
@@ -103,20 +105,20 @@ class CustomerAgent(mesa.Agent):
     def negotiateReleaseSpot(self):
         if (self.evaluateSpotReleaseForBonus()):
             self.state = CustomerState.LEFT_STATION
-            print(f'Customer {self.unique_id} released his spot for a bonus.')
+            print(f'{self.timeConverter.convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} released his spot for a bonus.')
             return True
         else:
-            print(f'Customer {self.unique_id} refused to release his spot for a bonus.')
+            print(f'{self.timeConverter.convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} refused to release his spot for a bonus.')
             return False
 
     
     def wait(self):
         if(self.model.charging_station.occupy_spot(self)):
             self.state = CustomerState.CHARGING
-            print(f'occupied by: {self.unique_id}')
+            print(f'{self.timeConverter.convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} started charging his car.')
         elif(self.model.schedule.time - self.arrival_time_in_minutes >= self.waiting_time_in_minutes):
             self.state = CustomerState.LEFT_STATION
-            print(f'Customer {self.unique_id} left after waiting for {self.model.schedule.time - self.arrival_time_in_minutes} minutes.')
+            print(f'{self.timeConverter.convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} left after waiting for {self.model.schedule.time - self.arrival_time_in_minutes} minutes.')
 
 
     def evaluateSpotReleaseForBonus(self):
