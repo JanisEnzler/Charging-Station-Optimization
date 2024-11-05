@@ -47,6 +47,7 @@ class CustomerAgent(mesa.Agent):
             self.state = CustomerState.CHARGING
             print(f'{self.timeConverter.convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} started charging his car.')
         elif(self.evaluateSkipQueueForExtraPayment()):
+            #implement bidding here
             if(self.model.provider.request_skip_queue(self)):
                 self.state = CustomerState.CHARGING
                 print(f'{self.timeConverter.convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} skipped the queue, and is now charging.')
@@ -130,3 +131,29 @@ class CustomerAgent(mesa.Agent):
         # Calculate how much the extra payment would affect the cost per kwh for the amount the customer wants to charge
         self.extra_per_kwh = (self.model.provider.skip_queue_price /(self.target_battery_level - self.current_battery_level)*1000)
         return (self.extra_per_kwh <= self.willingness_to_pay_extra_per_kwh)
+    
+
+    def get_waiting_customers(self):
+        waiting_customers = {}
+        for customer in self.model.schedule.time:
+            if customer.state == CustomerState.WAITING:
+                waiting_customers[customer] = customer.willingness_to_pay_extra_per_kwh
+        return waiting_customers
+    
+    def bid_spot(self):
+        waiting_customers = self.get_waiting_customers()
+        bidder = len(waiting_customers)
+
+        if bidder == 1:
+            return print(f'{self.timeConverter.convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} won the bidding with for a fee of: {self.willingness_to_pay_extra_per_kwh}.') 
+        elif bidder == 2:
+            winner = max(waiting_customers, key=waiting_customers.get)
+            bid_fee = min(waiting_customers.values())*0.1 #the winner pays the second highest bid but with an additional 10% fee
+            return print(f'{self.timeConverter.convert_time_to_string(self.model.schedule.time)}: Customer {winner.unique_id} won the bidding with for a fee of: {bid_fee}.')
+        elif bidder > 2:
+            sorted(waiting_customers.values())
+            winner = max(waiting_customers, key=waiting_customers.get)
+            bid_fee = list(waiting_customers.values())[-2]*0.1 #second highest bid with an additional 10% fee
+            return print(f'{self.timeConverter.convert_time_to_string(self.model.schedule.time)}: Customer {winner.unique_id} won the bidding with for a fee of: {bid_fee}.')
+        else:
+            return print(f'{self.timeConverter.convert_time_to_string(self.model.schedule.time)}: No auction took place.')
