@@ -7,9 +7,11 @@ from scipy import interpolate
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-# We have two customer profiles, 
+# We have three customer profiles, 
 # - PRIORITY_CHARGERS are customers how are willing to pay extra if the can charge their car faster, and dont have to wait in queue as long as others:
 # - FLEXIBLE_CHARGERS would be willing to release a spot and finish charging at another time of day, if the would get better prices.
+# - NORMAL_CHARGERS who just arrive, and charge if possible and leave otherwise
+
 
 
 
