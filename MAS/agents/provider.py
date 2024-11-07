@@ -17,6 +17,7 @@ class ProviderAgent(mesa.Agent):
             if (Customer.negotiateReleaseSpot()):
                 self.earnings += self.skip_queue_provider_cut
                 self.model.charging_station.swap_spot(Customer, customer)
+                self.model.changes.append(self.model.schedule.time)
                 self.customer_swaps_for_payment += 1
                 return True
         return False
