@@ -1,6 +1,12 @@
-class CustomerProfile:
+import json
 
-    '''
+class CustomerProfile:
+    
+    def __init__(self, data, profile):
+        self.min_willingness_to_pay = data["cutomer_profiles"][profile]['min_willingness_to_pay']
+        
+
+""""0
     profileName = Name of profile
     willingness_to_pay = willingness to pay CHF for kW
         - low = 0.00 - 0.05
@@ -22,8 +28,9 @@ class CustomerProfile:
         - medium = 0.05 - 0.2
         - high = 0.2 - 1
      '''
-    
-    def __init__(self, profileName, willingness_to_pay, willingness_to_wait, willingness_to_release, preferres_low_rates, willingness_to_subscribe):
+
+
+def __init__(self, profileName, willingness_to_pay, willingness_to_wait, willingness_to_release, preferres_low_rates, willingness_to_subscribe):
         self.profileName = profileName
         self.willingness_to_pay = willingness_to_pay
         self.willingness_to_wait = willingness_to_wait
@@ -35,7 +42,8 @@ class CustomerProfile:
         pass
 
 
-"""
+
+
 We have three customer profiles: Priority Chargers, Flexible chargers and normal charges:
 
 - PRIORITY_CHARGERS are customers how are willing to pay extra if the can charge their car faster, and dont have to wait in queue as long as others.
@@ -60,6 +68,4 @@ We have three customer profiles: Priority Chargers, Flexible chargers and normal
     - willingness_to_subscribe between medium and low
 
     
-    
     """
-

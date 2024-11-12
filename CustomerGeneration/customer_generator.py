@@ -4,11 +4,24 @@ from datetime import timedelta
 import configparser
 from scipy import interpolate
 from calculate_normalized_probabilites import get_normalized_probs
+from customer_profile import CustomerProfile
 import matplotlib.pyplot as plt
+import json
 
 config = configparser.ConfigParser()
 config.read('config.ini')
 
+data = open('CustomerGeneration/customer_profiles.json')
+data = json.load(data)
+
+profiles = []
+
+for profile in data["cutomer_profiles"]:
+    profiles.append(CustomerProfile(data, profile))
+    
+
+for p in profiles:
+    print(p.min_willingness_to_pay)
 # We have three customer profiles, 
 # - PRIORITY_CHARGERS are customers how are willing to pay extra if the can charge their car faster, and dont have to wait in queue as long as others:
 # - FLEXIBLE_CHARGERS would be willing to release a spot and finish charging at another time of day, if the would get better prices.
@@ -24,7 +37,7 @@ MAX_WAITING_TIME = config.getint('customer', 'MAX_WAITING_TIME_IN_MINUTES')
 NUMBER_OF_DAYS = config.getint('simulation', 'NUMBER_OF_DAYS')
 AVAILABILITY_DATASET_PATH = config.get('availability dataset', 'FILE_PATH')
 NUMBER_OF_DAYS_IN_DATASET = config.getint('availability dataset', 'NUMBER_OF_DAYS_IN_DATASET')
-DATASET_STARTING_TIMESTAMP = pd.Timestamp(config.get('availability dataset', 'STARTING_TIMESTAMP'))
+DATASET_STARTING_TIMESTAMP = config.get('availability dataset', 'STARTING_TIMESTAMP')
 
 probs = get_normalized_probs(AVAILABILITY_DATASET_PATH, DATASET_STARTING_TIMESTAMP, NUMBER_OF_DAYS, NUMBER_OF_DAYS_IN_DATASET)
 
