@@ -14,7 +14,7 @@ class CustomerState(Enum):
 class CustomerAgent(mesa.Agent):
 # Customer is equivalent to the agent in the MAS
 
-    def __init__(self, unique_id, model, arrival_time_in_minutes, waiting_time_in_minutes, battery_capacity, current_battery_level, target_battery_level,willingness_to_pay_extra_per_kwh, minimum_discount_per_kwh, soc, ocv):
+    def __init__(self, unique_id, model, arrival_time_in_minutes, waiting_time_in_minutes, battery_capacity, current_battery_level, target_battery_level,willingness_to_pay_extra_per_kwh, willingness_to_pay_release, soc, ocv):
         super().__init__(unique_id, model)
         self.state = CustomerState.NOT_ARRIVED
         self.arrival_time_in_minutes = arrival_time_in_minutes
@@ -23,7 +23,7 @@ class CustomerAgent(mesa.Agent):
         self.current_battery_level = current_battery_level
         self.target_battery_level = target_battery_level
         self.willingness_to_pay_extra_per_kwh = willingness_to_pay_extra_per_kwh
-        self.minimum_discount_per_kwh = minimum_discount_per_kwh
+        self.willingness_to_pay_release = willingness_to_pay_release
         self.soc = soc
         self.ocv = ocv
 
@@ -127,7 +127,7 @@ class CustomerAgent(mesa.Agent):
 
     def evaluateSpotReleaseForBonus(self):
         self.discount_per_kwh = ((self.model.provider.skip_queue_price - self.model.provider.skip_queue_provider_cut) /(self.target_battery_level - self.current_battery_level)*1000)
-        return (self.discount_per_kwh >= self.minimum_discount_per_kwh)
+        return (self.discount_per_kwh >= self.willingness_to_pay_release)
    
 
     def evaluateSkipQueueForExtraPayment(self):

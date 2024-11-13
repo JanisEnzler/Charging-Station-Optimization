@@ -1,10 +1,31 @@
 import json
+import numpy as np
 
 class CustomerProfile:
     
     def __init__(self, data, profile):
+        self.number_of_customers = data["cutomer_profiles"][profile]['number_of_customers']
         self.min_willingness_to_pay = data["cutomer_profiles"][profile]['min_willingness_to_pay']
+        self.max_willingness_to_pay = data["cutomer_profiles"][profile]['max_willingness_to_pay']
+        self.min_willingness_to_wait = data["cutomer_profiles"][profile]['min_willingness_to_wait']
+        self.max_willingness_to_wait = data["cutomer_profiles"][profile]['max_willingness_to_wait']
+        self.min_willingness_to_release = data["cutomer_profiles"][profile]['min_willingness_to_release']
+        self.max_willingness_to_release = data["cutomer_profiles"][profile]['max_willingness_to_release']
         
+    
+    def get_willingness_to_pay(self):
+        willingness_to_pay = np.random.uniform(self.min_willingness_to_pay, self.max_willingness_to_pay, self.number_of_customers)
+        return np.round(willingness_to_pay, 2)
+
+
+    def get_willingness_to_wait(self):
+        return np.random.randint(low=self.min_willingness_to_wait, high=self.max_willingness_to_wait, size=self.number_of_customers)
+
+
+    def get_willingness_to_release(self):
+        willingness_to_release = np.random.uniform(self.min_willingness_to_release, self.max_willingness_to_releas, self.number_of_customers)
+        return np.round(willingness_to_release, 2)
+    
 
 """"0
     profileName = Name of profile

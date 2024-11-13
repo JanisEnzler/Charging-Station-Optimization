@@ -18,10 +18,8 @@ profiles = []
 
 for profile in data["cutomer_profiles"]:
     profiles.append(CustomerProfile(data, profile))
-    
 
-for p in profiles:
-    print(p.min_willingness_to_pay)
+
 # We have three customer profiles, 
 # - PRIORITY_CHARGERS are customers how are willing to pay extra if the can charge their car faster, and dont have to wait in queue as long as others:
 # - FLEXIBLE_CHARGERS would be willing to release a spot and finish charging at another time of day, if the would get better prices.
@@ -53,49 +51,48 @@ ocv_df = {
 }
 
 
-df = pd.DataFrame()
+final_df = pd.DataFrame()
+
+for profile in profiles:
+    # np.random.choice(np.arange(0, len(normalized_probs)), p=normalized_probs)
+    arrival_times_in_minutes = np.random.choice(np.arange(0, len(probs)), p=probs,size=profile.number_of_customers)
+    # generating max waiting times for customers
+    waiting_times_in_minutes = profile.s()
+    # Battery capacity (for now 50kw/h or 50000w/h for all cars)
+    battery_capacity = 50000
+    # We assume that people wanting to charge have a battery level between 10% and 40%
+    current_battery_level = np.random.randint(low=5000, high=20000, size=profile.number_of_customers)
+    # Each customer has an amount of Money he would be willing to pay extra for a kilowatt hour (between 0.05 and 0.2 CHF), if the could skip the queue 
+    willingness_to_pay_extra_per_kwh = profile.get_willingness_to_pay()
+    # Each customer has an discount per kilowatt hour threshold with which he would be willing to release his spot and charge at another time (between 0.05 and 0.15 CHF)
+    willingness_to_release = profile.get_willingness_to_release()
+
+    # Create a DataFrame with the times
+    df = pd.DataFrame()
+    df['arrival_time_in_minutes'] = arrival_times_in_minutes
+    df['waiting_time_in_minutes'] = waiting_times_in_minutes
+    df['battery_capacity'] = battery_capacity
+    df['current_battery_level'] = current_battery_level
+    df['willingness_to_pay_extra_per_kwh'] = willingness_to_pay_extra_per_kwh
+    df['willingness_to_release'] = willingness_to_release
+
+    # We assume that people want to charge their battery somewhere between adding 30% to fully charging it
+    df['target_battery_level'] = np.random.randint(low=df['current_battery_level']+15000, high=df['battery_capacity'])
 
 
-# np.random.choice(np.arange(0, len(normalized_probs)), p=normalized_probs)
-    
-arrival_times_in_minutes = np.random.choice(np.arange(0, len(probs)), p=probs,size=NUMBER_OF_CUSTOMERS)
+    df['soc'] = (df['current_battery_level']/df['battery_capacity'])
 
-# generating max waiting times for customers
-waiting_times_in_minutes = np.random.randint(low=0, high=MAX_WAITING_TIME, size=NUMBER_OF_CUSTOMERS)
+    interpolation = interpolate.interp1d(ocv_df["SOC"], ocv_df["U_OCV"], kind='linear', fill_value="extrapolate")
+    current_ocv = interpolation(df["soc"])
+        
+    df["ocv"] = np.round(current_ocv,4)
 
-# Battery capacity (for now 50kw/h or 50000w/h for all cars)
-battery_capacity = 50000
+    final_df = final_df.append(df)
 
-# We assume that people wanting to charge have a battery level between 10% and 40%
-current_battery_level = np.random.randint(low=5000, high=20000, size=NUMBER_OF_CUSTOMERS)
-
-# Create a DataFrame with the times
-df = pd.DataFrame()
-df['arrival_time_in_minutes'] = arrival_times_in_minutes
-df['waiting_time_in_minutes'] = waiting_times_in_minutes
-df['battery_capacity'] = battery_capacity
-df['current_battery_level'] = current_battery_level
-
-# We assume that people want to charge their battery somewhere between adding 30% to fully charging it
-df['target_battery_level'] = np.random.randint(low=df['current_battery_level']+15000, high=df['battery_capacity'])
-
-# Each customer has an amount of Money he would be willing to pay extra for a kilowatt hour (between 0.05 and 0.2 CHF), if the could skip the queue 
-df['willingness_to_pay_extra_per_kwh'] = np.random.randint(low=5, high=21, size=NUMBER_OF_CUSTOMERS)/100
-
-# Each customer has an discount per kilowatt hour threshold with which he would be willing to release his spot and charge at another time (between 0.05 and 0.15 CHF)
-df['minimum_discount_per_kwh'] = np.random.randint(low=5, high=16, size=NUMBER_OF_CUSTOMERS)/100
-
-df['soc'] = (df['current_battery_level']/df['battery_capacity'])
-
-interpolation = interpolate.interp1d(ocv_df["SOC"], ocv_df["U_OCV"], kind='linear', fill_value="extrapolate")
-current_ocv = interpolation(df["soc"])
-    
-df["ocv"] = np.round(current_ocv,4)
-
-    
+        
 
 
-df.to_csv('customers.csv', index=False)
+final_df.to_csv('customers.csv', index=False)
 
 
 
