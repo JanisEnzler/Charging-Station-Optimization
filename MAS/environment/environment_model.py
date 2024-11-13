@@ -29,7 +29,7 @@ class Environment_Model(mesa.Model):
         df_sorted = df.sort_values(by='arrival_time_in_minutes', ascending=True)
     
         for row in df_sorted.iterrows():
-            a = CustomerAgent(row[0]+1, self, row[1]['arrival_time_in_minutes'], row[1]['waiting_time_in_minutes'], row[1]['battery_capacity'], row[1]['current_battery_level'], row[1]['target_battery_level'], row[1]['willingness_to_pay_extra_per_kwh'], row[1]['minimum_discount_per_kwh'], row[1]['soc'], row[1]['ocv'])
+            a = CustomerAgent(row[0]+1, self, row[1]['arrival_time_in_minutes'], row[1]['waiting_time_in_minutes'], row[1]['battery_capacity'], row[1]['current_battery_level'], row[1]['target_battery_level'], row[1]['willingness_to_pay_extra_per_kwh'], row[1]['willingness_to_release'], row[1]['soc'], row[1]['ocv'])
             self.customers.append(a)
             self.schedule.add(a)
 

@@ -57,7 +57,7 @@ for profile in profiles:
     # np.random.choice(np.arange(0, len(normalized_probs)), p=normalized_probs)
     arrival_times_in_minutes = np.random.choice(np.arange(0, len(probs)), p=probs,size=profile.number_of_customers)
     # generating max waiting times for customers
-    waiting_times_in_minutes = profile.s()
+    waiting_times_in_minutes = profile.get_willingness_to_wait()
     # Battery capacity (for now 50kw/h or 50000w/h for all cars)
     battery_capacity = 50000
     # We assume that people wanting to charge have a battery level between 10% and 40%
@@ -67,8 +67,10 @@ for profile in profiles:
     # Each customer has an discount per kilowatt hour threshold with which he would be willing to release his spot and charge at another time (between 0.05 and 0.15 CHF)
     willingness_to_release = profile.get_willingness_to_release()
 
+
     # Create a DataFrame with the times
     df = pd.DataFrame()
+    df['profile'] = [profile.profile_name] * profile.number_of_customers
     df['arrival_time_in_minutes'] = arrival_times_in_minutes
     df['waiting_time_in_minutes'] = waiting_times_in_minutes
     df['battery_capacity'] = battery_capacity
@@ -87,7 +89,7 @@ for profile in profiles:
         
     df["ocv"] = np.round(current_ocv,4)
 
-    final_df = final_df.append(df)
+    final_df = pd.concat([final_df, df])
 
         
 
