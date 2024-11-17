@@ -41,8 +41,15 @@ class CustomerAgent(mesa.Agent):
                 pass
 
 
+    # Returns True if charging price is below personal threshold
+    def check_price_threshold(self):
+        return (self.willingness_to_pay_extra_per_kwh + self.model.provider.standart_rate >= self.model.provider.dynamic_pricing_rate(self))
+
+
     def arrival(self):
-        if(self.model.charging_station.occupy_spot(self)):
+        if not self.check_price_threshold():
+            self.state = CustomerState.LEFT_STATION
+        elif(self.model.charging_station.occupy_spot(self)):
             self.state = CustomerState.CHARGING
             self.model.number_of_customers += 1
             print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} started charging his car.')
@@ -57,51 +64,55 @@ class CustomerAgent(mesa.Agent):
             print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} is waiting for a spot to charge.')
 
     def charge(self):
-        
-        # TODO Simulate charging here
-        I = self.model.station_power/self.ocv
-        if self.soc < 1:
-            while self.ocv < 4.2:
-                #print(f'Customer {self.unique_id} is CC charging')
-                self.ocv += 0.1
-                #print(self.ocv)
-                if self.ocv > 4.2:
-                    self.ocv = 4.2 #keep it at 4.2V
-                #print(f'Customer {self.unique_id} is not at {self.ocv} OCV')
+        # Check if electricity price is within personal threshold, otherwise leave the station
+        if self.check_price_threshold(): #over the remaining time and charge the car and how much the customer has to pay
+            
+            if (self not in self.model.charging_station.occupied_spots):
+                # TODO Replace with acutall error
+                print('ERROR: Customer was charging without occuping station')
+            
 
-            while self.ocv >= 4.2 and I > 0.01: #cv charging
-                #print(f'Customer {self.unique_id} is CV charging')
-                #keep voltage at 4.2V and decrease current until threshold is reached
-                I = I*0.99
-                #print(f'Current {I}')
-            #print(f'Customer {self.unique_id} is fully charged')
-        else:
-            pass
-            # print("no Charging needed")
+            I = self.model.station_power/self.ocv
+            if self.soc < 1:
+                while self.ocv < 4.2:
+                    #print(f'Customer {self.unique_id} is CC charging')
+                    self.ocv += 0.05 #temp value
+                    #print(self.ocv)
+                    if self.ocv > 4.2:
+                        self.ocv == 4.2 #keep it at 4.2V
+                    #print(f'Customer {self.unique_id} is not at {self.ocv} OCV')
 
-        if (self not in self.model.charging_station.occupied_spots):
-            # TODO Replace with acutall error
-            print('ERROR: Customer was charging without occuping station')
-        
-        #Temp
-        
-        if (self.current_battery_level + self.model.station_power/60 > self.battery_capacity):
-            self.model.provider.pay(self.battery_capacity - self.current_battery_level)
-            self.current_battery_level = self.battery_capacity
+                while self.ocv >= 4.2 and I > 0.01: #cv charging
+                    #print(f'Customer {self.unique_id} is CV charging')
+                    #keep voltage at 4.2V and decrease current until threshold is reached
+                    I = I*0.99
+                    #print(f'Current {I}')
+                #print(f'Customer {self.unique_id} is fully charged')
+            else:
+                pass
+                # print("no Charging needed")
+
+            #Temp
+            if (self.current_battery_level + self.model.station_power/60 > self.battery_capacity):
+                self.model.provider.pay(self.battery_capacity - self.current_battery_level)
+                self.current_battery_level = self.battery_capacity
+            else:
+                self.model.provider.pay(self.model.station_power/60)
+                self.current_battery_level += self.model.station_power/60
+            #Temp 
+            
+            if(self.current_battery_level >= self.target_battery_level):
+                if (self.model.charging_station.release_spot(self)):
+                    self.state = CustomerState.LEFT_STATION
+                    print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} left after charging his car for {self.model.schedule.time - self.arrival_time_in_minutes} minutes.')
+                else:
+                    # TODO Replace with acutall error
+                    # print('ERROR: Customer was charging without occuping station')
+                    pass
         else:
-            self.model.provider.pay(self.model.station_power/60)
-            self.current_battery_level += self.model.station_power/60
-        #Temp
-        
-        if(self.current_battery_level >= self.target_battery_level):
             if (self.model.charging_station.release_spot(self)):
                 self.state = CustomerState.LEFT_STATION
-                print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} left after charging his car for {self.model.schedule.time - self.arrival_time_in_minutes} minutes.')
-            else:
-                # TODO Replace with acutall error
-                # print('ERROR: Customer was charging without occuping station')
-                pass
-
+                print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} left after charging his car for {self.model.schedule.time - self.arrival_time_in_minutes} minutes, because the charging rate was too high')
     
     # Here the provider asks the customer if he would be willing to release the spot for a bonus
     def negotiateReleaseSpot(self):

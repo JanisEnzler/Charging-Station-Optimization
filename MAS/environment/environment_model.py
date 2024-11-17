@@ -2,7 +2,8 @@ import mesa
 
 import pandas as pd
 
-from MAS.agents.provider import ProviderAgent
+#from MAS.agents.provider import ProviderAgent
+from MAS.agents.provider_dynamic_pricing_model import DynamicPricingProviderAgent
 from MAS.agents.customer import CustomerAgent, CustomerState
 from MAS.entities.charging_station import ChargingStation
 
@@ -23,7 +24,9 @@ class Environment_Model(mesa.Model):
         self.number_of_customers = 0
         self.number_of_customers_that_could_not_charge = 0
         
-        self.provider = ProviderAgent(1,self, skip_queue_price, skip_queue_provider_cut, price_per_kwh)
+        
+        #self.provider = ProviderAgent(1,self, skip_queue_price, skip_queue_provider_cut, price_per_kwh)
+        self.provider = DynamicPricingProviderAgent(1,self, price_per_kwh)
 
         df = pd.read_csv('customers.csv')
         df_sorted = df.sort_values(by='arrival_time_in_minutes', ascending=True)
@@ -53,36 +56,3 @@ class Environment_Model(mesa.Model):
         print(f'Number of customers that charged: {self.number_of_customers}')
         self.provider.show_stats()
 
-
-
-    """Base class for models in the Mesa ABM library.
-basic attributes and methods necessary for initializing and running a simulation model.
-
-
-    Attributes:
-        running: A boolean indicating if the model should continue running.
-        schedule: An object to manage the order and execution of agent steps.
-        current_id: A counter for assigning unique IDs to agents.
-
-    Properties:
-        agents: An AgentSet containing all agents in the model
-        agent_types: A list of different agent types present in the model.
-        agents_by_type: A dictionary where the keys are agent types and the values are the corresponding AgentSets.
-
-    Methods:
-        get_agents_of_type: Returns an AgentSet of agents of the specified type.
-            Deprecated: Use agents_by_type[agenttype] instead.
-        run_model: Runs the model's simulation until a defined end condition is reached.
-        step: Executes a single step of the model's simulation process.
-        next_id: Generates and returns the next unique identifier for an agent.
-        reset_randomizer: Resets the model's random number generator with a new or existing seed.
-        initialize_data_collector: Sets up the data collector for the model, requiring an initialized scheduler and agents.
-        register_agent : register an agent with the model
-        deregister_agent : remove an agent from the model
-
-    Notes:
-        Model.agents returns the AgentSet containing all agents registered with the model. Changing
-        the content of the AgentSet directly can result in strange behavior. If you want change the
-        composition of this AgentSet, ensure you operate on a copy.
-
-    """

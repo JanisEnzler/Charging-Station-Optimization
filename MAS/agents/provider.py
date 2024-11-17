@@ -32,9 +32,5 @@ class ProviderAgent(mesa.Agent):
         print(f'{self.customer_swaps_for_payment} customers swapped spots for payment')
         print(f'CHF per kw/h earned: {self.earnings/self.kwh_cunsumed:.4f}')
 
-        
-
-
-    
-
-    
+    def dynamic_pricing_rate(self, customer):
+        return self.price_per_kwh
