@@ -32,7 +32,7 @@ def get_normalized_probs(file_path, start_timestamp, number_of_days_in_simulatio
     xnew = np.linspace(0, number_of_days_in_dataset * MINUTES_PER_DAY, num = number_of_days_in_dataset * MINUTES_PER_DAY+1)
     ynew = np.interp(xnew, x, y)
 
-    plt.plot(x)
+    """   plt.plot(x)
     plt.show()
     plt.plot(y)
     plt.show()
@@ -40,7 +40,8 @@ def get_normalized_probs(file_path, start_timestamp, number_of_days_in_simulatio
     plt.show()
     plt.plot(ynew)
     plt.show()
-
+    """
+    
     extended_y = extend(ynew, number_of_days_in_simulation)
 
     return normalize(extended_y)

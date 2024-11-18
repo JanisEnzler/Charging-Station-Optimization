@@ -43,11 +43,13 @@ class CustomerAgent(mesa.Agent):
 
     # Returns True if charging price is below personal threshold
     def check_price_threshold(self):
-        return (self.willingness_to_pay_extra_per_kwh + self.model.provider.standart_rate >= self.model.provider.dynamic_pricing_rate(self))
+        return (self.willingness_to_pay_extra_per_kwh + self.model.provider.price_per_kwh >= self.model.provider.dynamic_pricing_rate(self))
 
 
     def arrival(self):
         if not self.check_price_threshold():
+            self.model.number_of_customers_that_could_not_charge += 1
+            print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} left because the charging rate was too high. SOC: {self.getSoc()}') 
             self.state = CustomerState.LEFT_STATION
         elif(self.model.charging_station.occupy_spot(self)):
             self.state = CustomerState.CHARGING
@@ -65,8 +67,9 @@ class CustomerAgent(mesa.Agent):
 
     def charge(self):
         # Check if electricity price is within personal threshold, otherwise leave the station
-        if self.check_price_threshold(): #over the remaining time and charge the car and how much the customer has to pay
-            
+        if self.check_price_threshold(): #over the remaining time and charge the car and how much the customer has to pays
+            if(self.getSoc() >= 0.8):
+                print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} is charging with a SOC of {self.getSoc()}')
             if (self not in self.model.charging_station.occupied_spots):
                 # TODO Replace with acutall error
                 print('ERROR: Customer was charging without occuping station')
@@ -94,10 +97,10 @@ class CustomerAgent(mesa.Agent):
 
             #Temp
             if (self.current_battery_level + self.model.station_power/60 > self.battery_capacity):
-                self.model.provider.pay(self.battery_capacity - self.current_battery_level)
+                self.model.provider.pay((self.battery_capacity - self.current_battery_level), self)
                 self.current_battery_level = self.battery_capacity
             else:
-                self.model.provider.pay(self.model.station_power/60)
+                self.model.provider.pay(self.model.station_power/60, self)
                 self.current_battery_level += self.model.station_power/60
             #Temp 
             
@@ -112,7 +115,7 @@ class CustomerAgent(mesa.Agent):
         else:
             if (self.model.charging_station.release_spot(self)):
                 self.state = CustomerState.LEFT_STATION
-                print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} left after charging his car for {self.model.schedule.time - self.arrival_time_in_minutes} minutes, because the charging rate was too high')
+                print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} left after charging his car for {self.model.schedule.time - self.arrival_time_in_minutes} minutes, because the charging rate was too high SOC: {self.getSoc()}')
     
     # Here the provider asks the customer if he would be willing to release the spot for a bonus
     def negotiateReleaseSpot(self):
@@ -171,3 +174,6 @@ class CustomerAgent(mesa.Agent):
             return print(f'{self.timeConverter.convert_time_to_string(self.model.schedule.time)}: Customer {winner.unique_id} won the bidding with for a fee of: {bid_fee}.')
         else:
             return print(f'{self.timeConverter.convert_time_to_string(self.model.schedule.time)}: No auction took place.')
+        
+    def getSoc(self):
+        return self.current_battery_level/self.battery_capacity
