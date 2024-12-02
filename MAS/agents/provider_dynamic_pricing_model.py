@@ -37,6 +37,10 @@ class DynamicPricingProviderAgent(mesa.Agent):
     def demand(self):
         #based on queue length
         pass
+
+    def attend_auction(self) -> bool:
+        return False
+        
     
     def dynamic_pricing_rate(self, customer):
         if (customer.getSoc()) >= 0.8:

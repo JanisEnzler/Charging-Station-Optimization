@@ -26,3 +26,7 @@ class ProviderAgent(mesa.Agent):
 
     def dynamic_pricing_rate(self, customer):
         return self.price_per_kwh
+    
+    def attend_auction(self) -> bool:
+        return False
+        
