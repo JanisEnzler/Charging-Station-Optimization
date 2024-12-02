@@ -17,6 +17,7 @@ DO_PRINTS = config.getboolean('simulation', 'DO_PRINTS')
 
 from MAS.environment.environment_model import EnvironmentModel
 
+"""
 baseline_model = EnvironmentModel(NUMBER_OF_CHARGING_STATIONS, CHARGING_POWER,None,None,PRICE_PER_KWH_IN_CHF,DO_PRINTS, 1)
 for i in range(1440*NUMBER_OF_DAYS):
     baseline_model.step()
@@ -29,16 +30,20 @@ for i in range(1440*NUMBER_OF_DAYS):
 dynamic_pricing_model = EnvironmentModel(NUMBER_OF_CHARGING_STATIONS, CHARGING_POWER, SKIP_QUEUE_PRICE_CHF, SKIP_QUEUE_PROVIDER_CUT, PRICE_PER_KWH_IN_CHF, DO_PRINTS, 3)
 for i in range(1440*NUMBER_OF_DAYS):
     dynamic_pricing_model.step()
-    
-#auction_model = EnvironmentModel(NUMBER_OF_CHARGING_STATIONS, CHARGING_POWER, SKIP_QUEUE_PRICE_CHF, SKIP_QUEUE_PROVIDER_CUT, PRICE_PER_KWH_IN_CHF, DO_PRINTS, 4)
-#for i in range(1440*NUMBER_OF_DAYS):
-#    negotiation_model.step()
+
+"""
+
+
+auction_model = EnvironmentModel(NUMBER_OF_CHARGING_STATIONS, CHARGING_POWER, None, None, PRICE_PER_KWH_IN_CHF, DO_PRINTS, 4)
+for i in range(1440*NUMBER_OF_DAYS):
+    auction_model.step()
 
 
 #save the models in csv
-baseline_model.save_to_csv('baseline_outcome.csv')
-negotiation_model.save_to_csv('negotiation_outcome.csv')
-dynamic_pricing_model.save_to_csv('dynamic_pricing_outcome.csv')
-#auction_model.save_to_csv('auction.csv')
+#baseline_model.save_to_csv('baseline_outcome.csv')
+#negotiation_model.save_to_csv('negotiation_outcome.csv')
+#dynamic_pricing_model.save_to_csv('dynamic_pricing_outcome.csv')
+
+auction_model.save_to_csv('auction_outcome.csv')
 
 
