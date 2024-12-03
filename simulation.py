@@ -1,5 +1,6 @@
 import mesa
 import configparser
+import threading
 
 from ploter import plot_array_as_hist, plot_array, plot_array_as_bar
 
@@ -17,33 +18,45 @@ DO_PRINTS = config.getboolean('simulation', 'DO_PRINTS')
 
 from MAS.environment.environment_model import EnvironmentModel
 
-"""
-baseline_model = EnvironmentModel(NUMBER_OF_CHARGING_STATIONS, CHARGING_POWER,None,None,PRICE_PER_KWH_IN_CHF,DO_PRINTS, 1)
+
+def print_loading_bar(step, total_steps):
+    #Deletet the last loading bar
+    print("\b"*100, end="")
+    print(f"{step/total_steps*100:.2f}%", end="")
+
+
+""" baseline_model = EnvironmentModel(NUMBER_OF_CHARGING_STATIONS, CHARGING_POWER,None,None,PRICE_PER_KWH_IN_CHF,DO_PRINTS, 1)
 for i in range(1440*NUMBER_OF_DAYS):
     baseline_model.step()
+    print_loading_bar(i, 1440*NUMBER_OF_DAYS)
+baseline_model.save_to_csv('baseline_outcome.csv')
+
+print("Baseline model done") """
+
 
 negotiation_model = EnvironmentModel(NUMBER_OF_CHARGING_STATIONS, CHARGING_POWER, SKIP_QUEUE_PRICE_CHF, SKIP_QUEUE_PROVIDER_CUT, PRICE_PER_KWH_IN_CHF, DO_PRINTS, 2)
 for i in range(1440*NUMBER_OF_DAYS):
     negotiation_model.step()
+    print_loading_bar(i, 1440*NUMBER_OF_DAYS)
+negotiation_model.save_to_csv('negotiation_outcome.csv')
 
+print("Negotiation model done")
 
 dynamic_pricing_model = EnvironmentModel(NUMBER_OF_CHARGING_STATIONS, CHARGING_POWER, SKIP_QUEUE_PRICE_CHF, SKIP_QUEUE_PROVIDER_CUT, PRICE_PER_KWH_IN_CHF, DO_PRINTS, 3)
 for i in range(1440*NUMBER_OF_DAYS):
     dynamic_pricing_model.step()
+    print_loading_bar(i, 1440*NUMBER_OF_DAYS)
+dynamic_pricing_model.save_to_csv('dynamic_pricing_outcome.csv')
 
-"""
-
+print("Dynamic pricing model done")
 
 auction_model = EnvironmentModel(NUMBER_OF_CHARGING_STATIONS, CHARGING_POWER, None, None, PRICE_PER_KWH_IN_CHF, DO_PRINTS, 4)
 for i in range(1440*NUMBER_OF_DAYS):
     auction_model.step()
-
-
-#save the models in csv
-#baseline_model.save_to_csv('baseline_outcome.csv')
-#negotiation_model.save_to_csv('negotiation_outcome.csv')
-#dynamic_pricing_model.save_to_csv('dynamic_pricing_outcome.csv')
-
+    print_loading_bar(i, 1440*NUMBER_OF_DAYS)
 auction_model.save_to_csv('auction_outcome.csv')
+
+print("Auction model done")
+
 
 

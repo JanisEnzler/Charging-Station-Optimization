@@ -39,3 +39,8 @@ class NegotiationModelProviderAgent(mesa.Agent):
     #return False
     def attend_auction(self) -> bool:
         return False
+    
+    def pay_skip_queue(self):
+        self.earnings += self.skip_queue_provider_cut
+        # The rest of the skip queue price goes to the customer
+        return self.self.skip_queue_provider_cut

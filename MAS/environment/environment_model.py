@@ -26,7 +26,7 @@ class EnvironmentModel(mesa.Model):
         self.number_of_customers = 0
         self.number_of_customers_that_could_not_charge = 0
         self.doPrints = doPrints
-        data = {"Timestamp":[], "Agent":[], "Action":[], "Parameter":[]}
+        data = {"Timestamp":[], "Agent":[], "Action":[], "SOC":[], "PaymentToProvider":[], "PaymentToCustomer":[] }
         self.df = pd.DataFrame(data)
         
         match provider:
@@ -68,9 +68,9 @@ class EnvironmentModel(mesa.Model):
         print(f'Number of customers that charged: {self.number_of_customers}')
         self.provider.show_stats()
 
-    def add_to_csv(self, agent_id, action, parameter):
-        if len([self.schedule.time, agent_id, action, parameter]) == len(self.df.columns):
-            self.df.loc[len(self.df)] = [self.schedule.time, agent_id, action, parameter]
+    def add_to_csv(self, action, customer, payment_to_provider, payment_to_customer):
+        if len([self.schedule.time, customer.unique_id, action, customer.getSoc(), payment_to_provider, payment_to_customer]) == len(self.df.columns):
+            self.df.loc[len(self.df)] = [self.schedule.time, customer.unique_id, action, customer.getSoc(), payment_to_provider, payment_to_customer]
         else:
             print("Error: wrong number of columns")
         
