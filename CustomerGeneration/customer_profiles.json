@@ -1,37 +1,15 @@
 {
     "cutomer_profiles": {
-        "PRIORITY_CHARGERS": {
-            "number_of_customers": 930,
-            "min_willingness_to_pay": 0.1,
-            "max_willingness_to_pay": 0.2,
+        "STANDARD": {
+            "number_of_customers": 3000,
+            "min_willingness_to_pay": 0,
+            "max_willingness_to_pay": 0.35,
             "min_willingness_to_wait": 0,
             "max_willingness_to_wait": 5,
-            "min_willingness_to_release": 0.3,
-            "max_willingness_to_release": 0.5,
+            "min_willingness_to_release": 0.2,
+            "max_willingness_to_release": 0.4,
             "preferres_low_rates": false,
             "willingness_to_subscribe": 0.3
-        },
-        "FLEXIBLE_CHARGERS": {
-            "number_of_customers": 930,
-            "min_willingness_to_pay": 0.05,
-            "max_willingness_to_pay": 0.15,
-            "min_willingness_to_wait": 5,
-            "max_willingness_to_wait": 15,
-            "min_willingness_to_release": 0.05,
-            "max_willingness_to_release": 0.15,
-            "preferres_low_rates": true,
-            "willingness_to_subscribe": 0.1
-        },
-        "NORMAL_CHARGERS": {
-            "number_of_customers": 1140,
-            "min_willingness_to_pay": 0.0,
-            "max_willingness_to_pay": 0.05,
-            "min_willingness_to_wait": 10,
-            "max_willingness_to_wait": 20,
-            "min_willingness_to_release": 0.1,
-            "max_willingness_to_release": 0.2,
-            "preferres_low_rates": true,
-            "willingness_to_subscribe": 0.0
         }
     }
 }
