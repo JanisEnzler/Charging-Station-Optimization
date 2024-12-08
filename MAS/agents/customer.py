@@ -30,19 +30,22 @@ class CustomerAgent(mesa.Agent):
 # Customer is equivalent to the agent in the MAS
 
     def __init__(self, unique_id, model, arrival_time_in_minutes, waiting_time_in_minutes, battery_capacity, current_battery_level, target_battery_level,willingness_to_pay_extra_per_kwh, willingness_to_pay_release, soc, ocv):
-        super().__init__(unique_id, model)
+        #super().__init__(unique_id, model)
         self.state = CustomerState.NOT_ARRIVED
+        self.unique_id = unique_id
+        self.model = model
         self.arrival_time_in_minutes = arrival_time_in_minutes
         self.waiting_time_in_minutes = waiting_time_in_minutes
         self.battery_capacity = battery_capacity
         self.current_battery_level = current_battery_level
+        self.starting_battery_level = current_battery_level
+        self.totalPaymentToProvider = 0
         self.target_battery_level = target_battery_level
         self.willingness_to_pay_extra_per_kwh = willingness_to_pay_extra_per_kwh
         self.willingness_to_pay_release = willingness_to_pay_release
         self.soc = soc
         self.ocv = ocv
-        self.waiting_customers = {self: self.willingness_to_pay_extra_per_kwh}
-
+        self.fully_charged = False
 
     def step(self):
         match self.state:
@@ -63,88 +66,52 @@ class CustomerAgent(mesa.Agent):
 
 
     def arrival(self):
-        self.save_action_to_csv(CustomerActions.ARRIVED, 0,0)
+        self.save_action_to_csv(CustomerActions.ARRIVED, 0, 0, 0)
         if not self.check_price_threshold():
             self.model.number_of_customers_that_could_not_charge += 1
-            self.save_action_to_csv(CustomerActions.LEFT_BECAUSE_PRICE_IS_TO_HIGH, 0,0)
+            self.save_action_to_csv(CustomerActions.LEFT_BECAUSE_PRICE_IS_TO_HIGH, 0, 0, 0)
             self.print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} left because the charging rate was too high. SOC: {self.getSoc()}') 
             self.state = CustomerState.LEFT_STATION
         elif(self.model.charging_station.occupy_spot(self)):
             self.state = CustomerState.CHARGING
-            self.save_action_to_csv(CustomerActions.STARTING_TO_CHARGE, 0,0)
+            self.save_action_to_csv(CustomerActions.STARTING_TO_CHARGE, 0, 0, 0)
             self.model.number_of_customers += 1
         elif(self.evaluateSkipQueueForExtraPayment()):
             if(self.model.provider.request_skip_queue(self)):
                 self.state = CustomerState.CHARGING
                 self.model.number_of_customers += 1
                 self.print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} skipped the queue, and is now charging.')
-                self.save_action_to_csv(CustomerActions.SKIPED_QUEUE, self.model.provider.pay_skip_queue(), self.model.provider.skip_queue_price - self.model.provider.skip_queue_provider_cut)
+                self.save_action_to_csv(CustomerActions.SKIPED_QUEUE, self.model.provider.pay_skip_queue(), self.model.provider.skip_queue_price - self.model.provider.skip_queue_provider_cut, 0)
+                self.save_action_to_csv(CustomerActions.STARTING_TO_CHARGE, 0, 0, 0)
             else:
                 self.state = CustomerState.WAITING
                 self.print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} could not skip the queue and is now waiting.')
-                self.save_action_to_csv(CustomerActions.STARTED_TO_WAIT_IN_QUEUE, 0,0)
-        elif(self.model.provider.attend_auction()):
-            winner = self.model.provider.won_auction(self.waiting_customers)
-            if winner == self:
-                self.state = CustomerState.CHARGING
-                self.model.number_of_customers += 1
-                self.print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} won the auction, and is now charging.')
-                self.save_action_to_csv(CustomerActions.BIDDED_FOR_SPOT, 0,0)
-            else:
-                self.state = CustomerState.WAITING
-                self.print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} '
-                      f'lost the auction and continues waiting.')
+                self.save_action_to_csv(CustomerActions.STARTED_TO_WAIT_IN_QUEUE, 0, 0, 0)
+        elif(self.attend_auction()):
+            pass
         else:
             self.state = CustomerState.WAITING
             self.print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} is waiting for a spot to charge.')
-            self.save_action_to_csv(CustomerActions.STARTED_TO_WAIT_IN_QUEUE, 0,0)
+            self.save_action_to_csv(CustomerActions.STARTED_TO_WAIT_IN_QUEUE, 0, 0, 0)
+
+
     def charge(self):
         # Check if electricity price is within personal threshold, otherwise leave the station
         if self.check_price_threshold(): #over the remaining time and charge the car and how much the customer has to pays
-            if(self.getSoc() >= 0.8):
-                self.print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} is charging with a SOC of {self.getSoc()}')
             if (self not in self.model.charging_station.occupied_spots):
                 # TODO Replace with acutall error
                 self.print('ERROR: Customer was charging without occuping station')
-            
-            """
-            I = self.model.station_power/self.ocv
-            if self.soc < 1:
-                while self.ocv < 4.2:
-                    #self.print(f'Customer {self.unique_id} is CC charging')
-                    self.ocv += 0.05 #temp value
-                    #self.print(self.ocv)
-                    if self.ocv > 4.2:
-                        self.ocv == 4.2 #keep it at 4.2V
-                    #self.print(f'Customer {self.unique_id} is not at {self.ocv} OCV')
+    
+            delta = self.model.charging_station.charge(self, 1/60)
 
-                while self.ocv >= 4.2 and I > 0.01: #cv charging
-                    #self.print(f'Customer {self.unique_id} is CV charging')
-                    #keep voltage at 4.2V and decrease current until threshold is reached
-                    I = I*0.99
-                    #self.print(f'Current {I}')
-                #self.print(f'Customer {self.unique_id} is fully charged')
-            else:
-                pass
-                # self.print("no Charging needed")
-            """
-            #Temp - some adjustments needed
-            if (self.current_battery_level + self.model.station_power/60 > self.battery_capacity):
-                payment_amount = self.model.provider.pay(self.battery_capacity - self.current_battery_level, self)
-                self.save_action_to_csv(CustomerActions.PAYMENT_FOR_CHARGING, payment_amount,0)
-                self.current_battery_level = self.battery_capacity
-            else:
-                payment_amount = self.model.provider.pay(self.model.station_power/60, self)
-                self.save_action_to_csv(CustomerActions.PAYMENT_FOR_CHARGING, payment_amount,0)
-                self.current_battery_level += self.model.station_power/60
-                # self.save_action_to_csv() ?
-            #Temp 
+            # The payment is deducted from the customer's account every minute, because the price can change every minute
+            self.save_action_to_csv(CustomerActions.PAYMENT_FOR_CHARGING, self.model.provider.pay(delta, self), 0, delta)
             
-            if(self.current_battery_level >= self.target_battery_level):
+            if(self.current_battery_level >= self.target_battery_level or self.fully_charged):
                 if (self.model.charging_station.release_spot(self)):
                     self.state = CustomerState.LEFT_STATION
                     self.print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} left after charging his car for {self.model.schedule.time - self.arrival_time_in_minutes} minutes.')
-                    self.save_action_to_csv(CustomerActions.LEFT_AFTER_CHARGING, 0, 0)
+                    self.save_action_to_csv(CustomerActions.LEFT_AFTER_CHARGING, 0, 0, 0)
                 else:
                     # TODO Replace with acutall error
                     # self.print('ERROR: Customer was charging without occuping station')
@@ -153,33 +120,30 @@ class CustomerAgent(mesa.Agent):
             if (self.model.charging_station.release_spot(self)):
                 self.state = CustomerState.LEFT_STATION
                 self.print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} left after charging his car for {self.model.schedule.time - self.arrival_time_in_minutes} minutes, because the charging rate was too high SOC: {self.getSoc()}')
-                self.save_action_to_csv(CustomerActions.LEFT_BECAUSE_PRICE_IS_TO_HIGH, 0, 0)
+                self.save_action_to_csv(CustomerActions.LEFT_BECAUSE_PRICE_IS_TO_HIGH, 0, 0, 0)
     
     # Here the provider asks the customer if he would be willing to release the spot for a bonus
     def negotiateReleaseSpot(self):
         if (self.evaluateSpotReleaseForBonus()):
             self.state = CustomerState.LEFT_STATION
-            self.save_action_to_csv(CustomerActions.RELEASED_SPOT, 0, 0)
+            self.save_action_to_csv(CustomerActions.RELEASED_SPOT, 0, 0, 0)
             return True
         else:
             self.print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} refused to release his spot for a bonus.')
-            self.save_action_to_csv(CustomerActions.REFUSED_TO_RELEASE, 0, 0)
+            self.save_action_to_csv(CustomerActions.REFUSED_TO_RELEASE, 0, 0, 0)
             return False
 
-    def negotiateReleaseSpotAuctionModel(self):
-        if (self.evaluateSpotReleaseForBonusAuctionModel()):
+    def negotiateReleaseSpotAuctionModel(self, winning_bid, provider_cut):
+        earned_amount = winning_bid - provider_cut  #customer earns the difference between the winning bid and the provider cut
+        if (self.evaluateSpotReleaseForBonusAuctionModel(earned_amount)):
             self.state = CustomerState.LEFT_STATION
-            self.save_action_to_csv(CustomerActions.RELEASED_SPOT, 0, 0)
-            
-            winning_bid = self.model.provider.current_winning_bid
-            provider_cut = self.model.provider.current_provider_cut 
-            earned_amount = winning_bid - provider_cut  #customer earns the difference between the winning bid and the provider cut
-            self.save_action_to_csv(CustomerActions.PAYMENT_FOR_AUCTION, provider_cut, earned_amount)
+            self.save_action_to_csv(CustomerActions.RELEASED_SPOT, 0, 0, 0)
+            self.save_action_to_csv(CustomerActions.PAYMENT_FOR_AUCTION, provider_cut, earned_amount, 0)
             self.print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} release his spot for a bonus after the auction. Customer earned {earned_amount} and provider earned {provider_cut}')
             return True
         else:
             self.print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} refused to release his spot for a bonus.')
-            self.save_action_to_csv(CustomerActions.REFUSED_TO_RELEASE, 0, 0)
+            self.save_action_to_csv(CustomerActions.REFUSED_TO_RELEASE, 0, 0, 0)
             return False
     
     def wait(self):
@@ -187,12 +151,12 @@ class CustomerAgent(mesa.Agent):
             self.state = CustomerState.CHARGING
             self.model.number_of_customers += 1
             self.print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} started charging his car.')
-            self.save_action_to_csv(CustomerActions.STARTING_TO_CHARGE, 0, 0)
+            self.save_action_to_csv(CustomerActions.STARTING_TO_CHARGE, 0, 0, 0)
         elif(self.model.schedule.time - self.arrival_time_in_minutes >= self.waiting_time_in_minutes):
             self.state = CustomerState.LEFT_STATION
             self.model.number_of_customers_that_could_not_charge += 1
             self.print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} left after waiting for {self.model.schedule.time - self.arrival_time_in_minutes} minutes.')
-            self.save_action_to_csv(CustomerActions.LEFT_AFTER_WAITING, 0, 0)
+            self.save_action_to_csv(CustomerActions.LEFT_AFTER_WAITING, 0, 0, 0)
 
 
     def evaluateSpotReleaseForBonus(self):
@@ -200,12 +164,31 @@ class CustomerAgent(mesa.Agent):
         return (self.discount_per_kwh >= self.willingness_to_pay_release)
    
    
-    def evaluateSpotReleaseForBonusAuctionModel(self):
-        winning_bid = self.model.provider.current_winning_bid
-        provider_cut = self.model.provider.current_bid_fee - winning_bid
-        self.discount_per_kwh = ((winning_bid - provider_cut) / (self.target_battery_level - self.current_battery_level) * 1000)
+    def evaluateSpotReleaseForBonusAuctionModel(self, customer_cut):
+        self.discount_per_kwh = ((customer_cut) /(self.target_battery_level - self.current_battery_level)*1000)
         return (self.discount_per_kwh >= self.willingness_to_pay_release)
 
+    def attend_auction(self):
+        bid = self.calculateBid()
+        self.save_action_to_csv(CustomerActions.BIDDED_FOR_SPOT, 0, 0, 0)
+        if(self.model.provider.attend_auction(self, bid)):
+            #if self.state == CustomerState.CHARGING:
+            if self in self.model.charging_station.occupied_spots:
+                self.save_action_to_csv(CustomerActions.PAYMENT_FOR_CHARGING, self.model.provider.current_provider_cut, self.model.provider.current_bid_fee - self.model.provider.current_provider_cut, 0)
+                self.model.number_of_customers += 1
+                self.print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} won the auction, and is now charging.')
+                self.save_action_to_csv(CustomerActions.STARTING_TO_CHARGE, 0, 0, 0)
+                self.state = CustomerState.CHARGING
+                return True
+            else:
+                print("TEST")
+                self.state = CustomerState.WAITING
+                self.print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} lost the auction and continues waiting.')
+                return False
+        return False
+
+    def calculateBid(self):
+        return self.willingness_to_pay_extra_per_kwh * ((self.target_battery_level - self.current_battery_level) / 1000)
 
     def evaluateSkipQueueForExtraPayment(self):
         # try catch
@@ -223,10 +206,10 @@ class CustomerAgent(mesa.Agent):
     def getSoc(self):
         return self.current_battery_level/self.battery_capacity
     
-    def save_action_to_csv(self, action, payment_to_provider, payment_to_customer):
+    def save_action_to_csv(self, action, payment_to_provider, payment_to_customer, deltaWatthours):
         if(self.model.doPrints):
             print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id}: {action} with payment to provider: {payment_to_provider} and payment to customer: {payment_to_customer}')
-        self.model.add_to_csv(action, self, payment_to_provider, payment_to_customer)
+        self.model.add_to_csv(action, self, payment_to_provider, payment_to_customer, deltaWatthours)
 
     def print(self, String):
         if(self.model.doPrints):

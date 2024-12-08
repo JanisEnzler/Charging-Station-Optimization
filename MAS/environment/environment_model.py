@@ -12,12 +12,13 @@ from MAS.entities.charging_station import ChargingStation
 
 class EnvironmentModel(mesa.Model):
 
-    def __init__(self, num_charge_spots, station_power, skip_queue_price, skip_queue_provider_cut, price_per_kwh, doPrints, provider):
+    def __init__(self, num_charge_spots, station_amperage, station_voltage, cc_cv_threshold, charging_beta_value, skip_queue_price, skip_queue_provider_cut, price_per_kwh, doPrints, provider):
         super().__init__()
 
         self.schedule = mesa.time.BaseScheduler(self)
-        self.charging_station = ChargingStation(num_charge_spots)
-        self.station_power = station_power
+        self.charging_station = ChargingStation(num_charge_spots, station_amperage, station_voltage, cc_cv_threshold, charging_beta_value, price_per_kwh)
+        self.station_amperage = station_amperage
+        self.station_voltage = station_voltage
         self.customers = []
 
         self.customers_charging = []
@@ -26,7 +27,7 @@ class EnvironmentModel(mesa.Model):
         self.number_of_customers = 0
         self.number_of_customers_that_could_not_charge = 0
         self.doPrints = doPrints
-        data = {"Timestamp":[], "Agent":[], "Action":[], "SOC":[], "PaymentToProvider":[], "PaymentToCustomer":[] }
+        data = {"Timestamp":[], "Agent":[], "Action":[], "SOC":[], "AmountCharged":[], "PaymentToProvider":[], "PaymentToCustomer":[] }
         self.df = pd.DataFrame(data)
         
         match provider:
@@ -51,26 +52,13 @@ class EnvironmentModel(mesa.Model):
             self.schedule.add(a)
 
     def step(self):
-
         self.schedule.step()
 
-    
-        self.customers_charging.append(len(self.charging_station.occupied_spots))
-        number_waiting = 0
-        for customer in self.customers:
-            if customer.state == CustomerState.WAITING:
-                number_waiting += 1
-        self.customers_waiting.append(number_waiting)
 
 
-    def show_stats(self):
-        print(f'\nNumber of customers that could not charge: {self.number_of_customers_that_could_not_charge}')
-        print(f'Number of customers that charged: {self.number_of_customers}')
-        self.provider.show_stats()
-
-    def add_to_csv(self, action, customer, payment_to_provider, payment_to_customer):
-        if len([self.schedule.time, customer.unique_id, action, customer.getSoc(), payment_to_provider, payment_to_customer]) == len(self.df.columns):
-            self.df.loc[len(self.df)] = [self.schedule.time, customer.unique_id, action, customer.getSoc(), payment_to_provider, payment_to_customer]
+    def add_to_csv(self, action, customer, payment_to_provider, payment_to_customer, deltaWattHours):
+        if len([self.schedule.time, customer.unique_id, action, customer.getSoc(), deltaWattHours, payment_to_provider, payment_to_customer]) == len(self.df.columns):
+            self.df.loc[len(self.df)] = [self.schedule.time, customer.unique_id, action, customer.getSoc(), deltaWattHours, payment_to_provider, payment_to_customer]
         else:
             print("Error: wrong number of columns")
         

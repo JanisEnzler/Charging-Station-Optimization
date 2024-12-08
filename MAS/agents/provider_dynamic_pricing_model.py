@@ -38,13 +38,13 @@ class DynamicPricingProviderAgent(mesa.Agent):
         #based on queue length
         pass
 
-    def attend_auction(self) -> bool:
+    def attend_auction(self,customer, bid) -> bool:
         return False
         
     
     def dynamic_pricing_rate(self, customer):
         if (customer.getSoc()) >= 0.8:
-            return self.price_per_kwh * 1.2
+            return self.price_per_kwh * 1.05
         else:
             return self.price_per_kwh 
 

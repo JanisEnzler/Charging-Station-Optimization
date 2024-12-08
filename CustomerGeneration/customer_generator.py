@@ -15,6 +15,7 @@ data = open('CustomerGeneration/customer_profiles.json')
 data = json.load(data)
 
 profiles = []
+cars = []
 
 for profile in data["cutomer_profiles"]:
     profiles.append(CustomerProfile(data, profile))
@@ -28,10 +29,6 @@ for profile in data["cutomer_profiles"]:
 
 
 
-NUMBER_OF_CUSTOMERS = config.getint('customer', 'NUMBER_OF_CUSTOMERS')
-MEAN_ARRIVAL_TIME = config.getint('customer', 'MEAN_ARRIVAL_TIME_IN_MINUTES')
-STD_DEV_ARRIVAL_TIME = config.getint('customer', 'STD_DEV_ARRIVAL_TIME_IN_MINUTES')
-MAX_WAITING_TIME = config.getint('customer', 'MAX_WAITING_TIME_IN_MINUTES')
 NUMBER_OF_DAYS = config.getint('simulation', 'NUMBER_OF_DAYS')
 AVAILABILITY_DATASET_PATH = config.get('availability dataset', 'FILE_PATH')
 NUMBER_OF_DAYS_IN_DATASET = config.getint('availability dataset', 'NUMBER_OF_DAYS_IN_DATASET')
@@ -58,8 +55,6 @@ for profile in profiles:
     arrival_times_in_minutes = np.random.choice(np.arange(0, len(probs)), p=probs,size=profile.number_of_customers)
     # generating max waiting times for customers
     waiting_times_in_minutes = profile.get_willingness_to_wait()
-    # Battery capacity (for now 50kw/h or 50000w/h for all cars)
-    battery_capacity = 50000
     # We assume that people wanting to charge have a battery level between 10% and 40%
     current_battery_level = np.random.randint(low=5000, high=20000, size=profile.number_of_customers)
     # Each customer has an amount of Money he would be willing to pay extra for a kilowatt hour (between 0.05 and 0.2 CHF), if the could skip the queue 
@@ -69,11 +64,17 @@ for profile in profiles:
 
 
     # Create a DataFrame with the times
+    car_probs = [data["cars"][car]['probability'] for car in data["cars"]]
+    car_keys = list(data['cars'].keys())
+
     df = pd.DataFrame()
+    # Assign each customer a car based on the cars probability i.e. how common the car is in switzerland
+    df['car'] = np.random.choice(car_keys, p=car_probs, size=profile.number_of_customers)
+
+    df['battery_capacity'] = df['car'].apply(lambda x: data["cars"][x]["battery_capacity"])
     df['profile'] = [profile.profile_name] * profile.number_of_customers
     df['arrival_time_in_minutes'] = arrival_times_in_minutes
     df['waiting_time_in_minutes'] = waiting_times_in_minutes
-    df['battery_capacity'] = battery_capacity
     df['current_battery_level'] = current_battery_level
     df['willingness_to_pay_extra_per_kwh'] = willingness_to_pay_extra_per_kwh
     df['willingness_to_release'] = willingness_to_release

@@ -11,5 +11,27 @@
             "preferres_low_rates": false,
             "willingness_to_subscribe": 0.3
         }
+    },
+    "cars": {
+        "Tesla Model Y": {
+            "probability": 0.383,
+            "battery_capacity": 75000
+        },
+        "Skoda Enyaq": {
+            "probability": 0.185,
+            "battery_capacity": 77000
+        },
+        "Volvo EX30": {
+            "probability": 0.176,
+            "battery_capacity": 51000
+        },
+        "Audi Q4 e-tron": {
+            "probability": 0.148,
+            "battery_capacity": 52000
+        },
+        "Tesla Model 3": {
+            "probability": 0.108,
+            "battery_capacity": 75000
+        }
     }
 }
