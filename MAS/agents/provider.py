@@ -10,9 +10,6 @@ class ProviderAgent(mesa.Agent):
         self.kwh_consumed = 0
         self.customer_swaps_for_payment = 0
     
-    def request_skip_queue(self, customer):
-        return False
-    
     def pay(self, watt_hours, customer):
         self.kwh_consumed += watt_hours/1000
         self.earnings += watt_hours/1000 * self.price_per_kwh
@@ -26,7 +23,4 @@ class ProviderAgent(mesa.Agent):
 
     def dynamic_pricing_rate(self, customer):
         return self.price_per_kwh
-    
-    def attend_auction(self,customer, bid) -> bool:
-        return False
         

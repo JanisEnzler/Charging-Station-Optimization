@@ -38,22 +38,26 @@ class ChargingStation:
 
         charging_delta = 0
 
-        soc = customer.getSoc()
-        if (soc < self.cc_cv_threshold):
-            # CC charging
-            charging_delta = self.station_amperage * self.station_voltage * time_elapsed_in_hours
-            customer.current_battery_level += charging_delta
+        if customer not in self.occupied_spots:
+            print("ERROR: Customer charging without occuoing a spot in the charging station")
+            return 0
         else:
-             # CV charging
-             I = self.station_amperage * np.exp(-self.beta * (soc - self.cc_cv_threshold)) 
-             charging_delta = I * self.station_voltage * time_elapsed_in_hours
-             if customer.current_battery_level + charging_delta > customer.battery_capacity:
-                    charging_delta = customer.battery_capacity - customer.current_battery_level
-                    customer.fully_charged = True
-             customer.current_battery_level += charging_delta
-             if I < 0.01:
-                    customer.fully_charged = True
-        return charging_delta
+            soc = customer.getSoc()
+            if (soc < self.cc_cv_threshold):
+                # CC charging
+                charging_delta = self.station_amperage * self.station_voltage * time_elapsed_in_hours
+                customer.current_battery_level += charging_delta
+            else:
+                # CV charging
+                I = self.station_amperage * np.exp(-self.beta * (soc - self.cc_cv_threshold)) 
+                charging_delta = I * self.station_voltage * time_elapsed_in_hours
+                if customer.current_battery_level + charging_delta > customer.battery_capacity:
+                        charging_delta = customer.battery_capacity - customer.current_battery_level
+                        customer.fully_charged = True
+                customer.current_battery_level += charging_delta
+                if I < 0.01:
+                        customer.fully_charged = True
+            return charging_delta
             
 
             

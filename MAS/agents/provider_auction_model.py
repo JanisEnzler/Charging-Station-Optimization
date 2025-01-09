@@ -15,11 +15,6 @@ class AuctionModelProviderAgent(mesa.Agent):
         self.current_provider_cut = 0
         self.bidders = {}
 
-    def request_skip_queue(self, customer):
-        return False
-
-    
-
     #determine the winner of the auction, Optional if no auction took place
     def won_auction(self, bidders: dict) -> Optional[CustomerAgent]:
         try:

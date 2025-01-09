@@ -20,10 +20,6 @@ class DynamicPricingProviderAgent(mesa.Agent):
         self.earnings = 0
         self.kwh_consumed = 0
 
-
-    def request_skip_queue(self, customer):
-        return False
-    
     def pay(self, watt_hours, customer):
         self.kwh_consumed += watt_hours/1000
         self.earnings += watt_hours/1000 * self.dynamic_pricing_rate(customer)
@@ -33,14 +29,6 @@ class DynamicPricingProviderAgent(mesa.Agent):
         print(f'\nProvider earned: {self.earnings:.2f} CHF')
         print(f'{self.kwh_consumed:.2f} kw/h of electricity was consumed')
         print(f'CHF per kw/h earned: {self.earnings/self.kwh_consumed:.4f}')
-
-    def demand(self):
-        #based on queue length
-        pass
-
-    def attend_auction(self,customer, bid) -> bool:
-        return False
-        
     
     def dynamic_pricing_rate(self, customer):
         if (customer.getSoc()) >= 0.8:
