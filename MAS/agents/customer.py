@@ -82,9 +82,9 @@ class CustomerAgent(mesa.Agent):
                     self.model.number_of_customers += 1
                     self.perform_action(CustomerActions.SKIPED_QUEUE, self.model.provider.pay_skip_queue(), self.model.provider.skip_queue_price - self.model.provider.skip_queue_provider_cut, 0)
                     self.perform_action(CustomerActions.STARTING_TO_CHARGE, 0, 0, 0)
-                else:
-                    self.state = CustomerState.WAITING
-                    self.perform_action(CustomerActions.STARTED_TO_WAIT_IN_QUEUE, 0, 0, 0)
+                    return
+            self.state = CustomerState.WAITING
+            self.perform_action(CustomerActions.STARTED_TO_WAIT_IN_QUEUE, 0, 0, 0)
         elif hasattr( self.model.provider, 'attend_auction' ):
             self.attend_auction()
         else:
@@ -177,16 +177,8 @@ class CustomerAgent(mesa.Agent):
         return self.willingness_to_pay_extra_per_kwh * ((self.target_battery_level - self.current_battery_level) / 1000)
 
     def evaluateSkipQueueForExtraPayment(self):
-        # try catch
-            #check skip queue price (provider) if false
-            #expected error
-        try:
-            skip_queue_price = self.model.provider.skip_queue_price
-        except:
-            return False
-
         # Calculate how much the extra payment would affect the cost per kwh for the amount the customer wants to charge
-        self.extra_per_kwh = (skip_queue_price /(self.target_battery_level - self.current_battery_level)*1000)
+        self.extra_per_kwh = (self.model.provider.skip_queue_price /(self.target_battery_level - self.current_battery_level)*1000)
         return (self.extra_per_kwh <= self.willingness_to_pay_extra_per_kwh)
 
     def getSoc(self):

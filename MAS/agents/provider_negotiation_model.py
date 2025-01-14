@@ -36,10 +36,6 @@ class NegotiationModelProviderAgent(mesa.Agent):
     def dynamic_pricing_rate(self, customer):
         return self.price_per_kwh
     
-    #return False
-    def attend_auction(self,customer, bid) -> bool:
-        return False
-    
     def pay_skip_queue(self):
         self.earnings += self.skip_queue_provider_cut
         # The rest of the skip queue price goes to the customer

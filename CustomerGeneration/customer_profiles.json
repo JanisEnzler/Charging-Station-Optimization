@@ -9,7 +9,10 @@
             "min_willingness_to_release": 0.2,
             "max_willingness_to_release": 0.4,
             "preferres_low_rates": false,
-            "willingness_to_subscribe": 0.3
+            "willingness_to_subscribe": 0.3,
+            "starting_soc_minimum": 0.1,
+            "starting_soc_maximum": 0.5,
+            "minimum_soc_charged": 0.3
         }
     },
     "cars": {

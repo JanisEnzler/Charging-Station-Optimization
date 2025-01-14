@@ -1,17 +1,41 @@
 import json
 import numpy as np
+import pandas as pd
 
 class CustomerProfile:
     
     def __init__(self, data, profile):
+
         self.profile_name = profile
+        self.starting_soc_minimum = data["cutomer_profiles"][profile]['starting_soc_minimum']
+        self.starting_soc_maximum = data["cutomer_profiles"][profile]['starting_soc_maximum']
+
+        if self.starting_soc_minimum >= self.starting_soc_maximum:
+            raise ValueError("Starting SOC minimum is greater than or equal to the maximum")
+
+        self.minimum_soc_charged = data["cutomer_profiles"][profile]['minimum_soc_charged']
+
+        if self.minimum_soc_charged + self.starting_soc_maximum > 1:
+            raise ValueError("Minimum SOC charged and starting SOC maximum are greater than 1")
+
         self.number_of_customers = data["cutomer_profiles"][profile]['number_of_customers']
         self.min_willingness_to_pay = data["cutomer_profiles"][profile]['min_willingness_to_pay']
         self.max_willingness_to_pay = data["cutomer_profiles"][profile]['max_willingness_to_pay']
+
+        if self.min_willingness_to_pay >= self.max_willingness_to_pay:
+            raise ValueError("Minimum willingness to pay is greater than maximum")
+
         self.min_willingness_to_wait = data["cutomer_profiles"][profile]['min_willingness_to_wait']
         self.max_willingness_to_wait = data["cutomer_profiles"][profile]['max_willingness_to_wait']
+
+        if self.min_willingness_to_wait >= self.max_willingness_to_wait:
+            raise ValueError("Minimum willingness to wait is greater than maximum")
+
         self.min_willingness_to_release = data["cutomer_profiles"][profile]['min_willingness_to_release']
         self.max_willingness_to_release = data["cutomer_profiles"][profile]['max_willingness_to_release']
+
+        if self.min_willingness_to_release >= self.max_willingness_to_release:
+            raise ValueError("Minimum willingness to release is greater than maximum")
         
     
     def get_willingness_to_pay(self):
@@ -26,7 +50,15 @@ class CustomerProfile:
     def get_willingness_to_release(self):
         willingness_to_release = np.random.uniform(self.min_willingness_to_release, self.max_willingness_to_release, self.number_of_customers)
         return np.round(willingness_to_release, 2)
+
+    def get_min_starting_soc(self):
+        return self.starting_soc_minimum
     
+    def get_max_starting_soc(self):
+        return self.starting_soc_maximum
+    
+    def get_min_soc_charged(self):
+        return self.minimum_soc_charged
 
 """"0
     profileName = Name of profile

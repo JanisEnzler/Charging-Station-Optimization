@@ -55,8 +55,6 @@ for profile in profiles:
     arrival_times_in_minutes = np.random.choice(np.arange(0, len(probs)), p=probs,size=profile.number_of_customers)
     # generating max waiting times for customers
     waiting_times_in_minutes = profile.get_willingness_to_wait()
-    # We assume that people wanting to charge have a battery level between 10% and 40%
-    current_battery_level = np.random.randint(low=5000, high=20000, size=profile.number_of_customers)
     # Each customer has an amount of Money he would be willing to pay extra for a kilowatt hour (between 0.05 and 0.2 CHF), if the could skip the queue 
     willingness_to_pay_extra_per_kwh = profile.get_willingness_to_pay()
     # Each customer has an discount per kilowatt hour threshold with which he would be willing to release his spot and charge at another time (between 0.05 and 0.15 CHF)
@@ -75,12 +73,14 @@ for profile in profiles:
     df['profile'] = [profile.profile_name] * profile.number_of_customers
     df['arrival_time_in_minutes'] = arrival_times_in_minutes
     df['waiting_time_in_minutes'] = waiting_times_in_minutes
-    df['current_battery_level'] = current_battery_level
+    
+
+    df['current_battery_level'] = df['battery_capacity'].apply(lambda x: np.random.randint(low=int(profile.get_min_starting_soc() * x), high=int(profile.get_max_starting_soc() * x)))
     df['willingness_to_pay_extra_per_kwh'] = willingness_to_pay_extra_per_kwh
     df['willingness_to_release'] = willingness_to_release
 
     # We assume that people want to charge their battery somewhere between adding 30% to fully charging it
-    df['target_battery_level'] = np.random.randint(low=df['current_battery_level']+15000, high=df['battery_capacity'])
+    df['target_battery_level'] = np.random.randint(low=df['current_battery_level']+(df['battery_capacity'] * profile.get_min_soc_charged()), high=df['battery_capacity'])
 
 
     df['soc'] = (df['current_battery_level']/df['battery_capacity'])

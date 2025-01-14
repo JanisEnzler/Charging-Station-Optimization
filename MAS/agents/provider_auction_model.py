@@ -50,8 +50,6 @@ class AuctionModelProviderAgent(mesa.Agent):
                         return None
                     
                     self.customer_swaps_for_payment += 1
-                    print(f'Time {self.model.schedule.time}: Customer {winner.unique_id} '
-                        f'won the auction with a fee of: {self.current_bid_fee}.')
                     return winner
                     
             # if no auction took place
