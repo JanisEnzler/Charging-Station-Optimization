@@ -66,30 +66,30 @@ class CustomerAgent(mesa.Agent):
 
 
     def arrival(self):
-        self.save_action_to_csv(CustomerActions.ARRIVED, 0, 0, 0)
+        self.perform_action(CustomerActions.ARRIVED, 0, 0, 0)
         if not self.check_price_threshold():
             self.model.number_of_customers_that_could_not_charge += 1
-            self.save_action_to_csv(CustomerActions.LEFT_BECAUSE_PRICE_IS_TO_HIGH, 0, 0, 0)
+            self.perform_action(CustomerActions.LEFT_BECAUSE_PRICE_IS_TO_HIGH, 0, 0, 0)
             self.state = CustomerState.LEFT_STATION
         elif(self.model.charging_station.occupy_spot(self)):
             self.state = CustomerState.CHARGING
-            self.save_action_to_csv(CustomerActions.STARTING_TO_CHARGE, 0, 0, 0)
+            self.perform_action(CustomerActions.STARTING_TO_CHARGE, 0, 0, 0)
             self.model.number_of_customers += 1
         elif hasattr( self.model.provider, 'request_skip_queue' ):
             if(self.evaluateSkipQueueForExtraPayment()):
                 if(self.model.provider.request_skip_queue(self)):
                     self.state = CustomerState.CHARGING
                     self.model.number_of_customers += 1
-                    self.save_action_to_csv(CustomerActions.SKIPED_QUEUE, self.model.provider.pay_skip_queue(), self.model.provider.skip_queue_price - self.model.provider.skip_queue_provider_cut, 0)
-                    self.save_action_to_csv(CustomerActions.STARTING_TO_CHARGE, 0, 0, 0)
+                    self.perform_action(CustomerActions.SKIPED_QUEUE, self.model.provider.pay_skip_queue(), self.model.provider.skip_queue_price - self.model.provider.skip_queue_provider_cut, 0)
+                    self.perform_action(CustomerActions.STARTING_TO_CHARGE, 0, 0, 0)
                 else:
                     self.state = CustomerState.WAITING
-                    self.save_action_to_csv(CustomerActions.STARTED_TO_WAIT_IN_QUEUE, 0, 0, 0)
+                    self.perform_action(CustomerActions.STARTED_TO_WAIT_IN_QUEUE, 0, 0, 0)
         elif hasattr( self.model.provider, 'attend_auction' ):
             self.attend_auction()
         else:
             self.state = CustomerState.WAITING
-            self.save_action_to_csv(CustomerActions.STARTED_TO_WAIT_IN_QUEUE, 0, 0, 0)
+            self.perform_action(CustomerActions.STARTED_TO_WAIT_IN_QUEUE, 0, 0, 0)
 
 
     def charge(self):
@@ -101,50 +101,50 @@ class CustomerAgent(mesa.Agent):
             delta = self.model.charging_station.charge(self, 1/60)
 
             # The payment is deducted from the customer's account every minute, because the price can change every minute
-            self.save_action_to_csv(CustomerActions.PAYMENT_FOR_CHARGING, self.model.provider.pay(delta, self), 0, delta)
+            self.perform_action(CustomerActions.PAYMENT_FOR_CHARGING, self.model.provider.pay(delta, self), 0, delta)
             
             if(self.current_battery_level >= self.target_battery_level or self.fully_charged):
                 if (self.model.charging_station.release_spot(self)):
                     self.state = CustomerState.LEFT_STATION
-                    self.save_action_to_csv(CustomerActions.LEFT_AFTER_CHARGING, 0, 0, 0)
+                    self.perform_action(CustomerActions.LEFT_AFTER_CHARGING, 0, 0, 0)
                 else:
                     print('ERROR: Customer was charging without occuping station')
                     pass
         else:
             if (self.model.charging_station.release_spot(self)):
                 self.state = CustomerState.LEFT_STATION
-                self.save_action_to_csv(CustomerActions.LEFT_BECAUSE_PRICE_IS_TO_HIGH, 0, 0, 0)
+                self.perform_action(CustomerActions.LEFT_BECAUSE_PRICE_IS_TO_HIGH, 0, 0, 0)
     
     # Here the provider asks the customer if he would be willing to release the spot for a bonus
     def negotiateReleaseSpot(self):
         if (self.evaluateSpotReleaseForBonus()):
             self.state = CustomerState.LEFT_STATION
-            self.save_action_to_csv(CustomerActions.RELEASED_SPOT, 0, 0, 0)
+            self.perform_action(CustomerActions.RELEASED_SPOT, 0, 0, 0)
             return True
         else:
-            self.save_action_to_csv(CustomerActions.REFUSED_TO_RELEASE, 0, 0, 0)
+            self.perform_action(CustomerActions.REFUSED_TO_RELEASE, 0, 0, 0)
             return False
 
     def negotiateReleaseSpotAuctionModel(self, winning_bid, provider_cut):
         earned_amount = winning_bid - provider_cut  #customer earns the difference between the winning bid and the provider cut
         if (self.evaluateSpotReleaseForBonusAuctionModel(earned_amount)):
             self.state = CustomerState.LEFT_STATION
-            self.save_action_to_csv(CustomerActions.RELEASED_SPOT, 0, 0, 0)
-            self.save_action_to_csv(CustomerActions.PAYMENT_FOR_AUCTION, provider_cut, earned_amount, 0)
+            self.perform_action(CustomerActions.RELEASED_SPOT, 0, 0, 0)
+            self.perform_action(CustomerActions.PAYMENT_FOR_AUCTION, provider_cut, earned_amount, 0)
             return True
         else:
-            self.save_action_to_csv(CustomerActions.REFUSED_TO_RELEASE, 0, 0, 0)
+            self.perform_action(CustomerActions.REFUSED_TO_RELEASE, 0, 0, 0)
             return False
     
     def wait(self):
         if(self.model.charging_station.occupy_spot(self)):
             self.state = CustomerState.CHARGING
             self.model.number_of_customers += 1
-            self.save_action_to_csv(CustomerActions.STARTING_TO_CHARGE, 0, 0, 0)
+            self.perform_action(CustomerActions.STARTING_TO_CHARGE, 0, 0, 0)
         elif(self.model.schedule.time - self.arrival_time_in_minutes >= self.waiting_time_in_minutes):
             self.state = CustomerState.LEFT_STATION
             self.model.number_of_customers_that_could_not_charge += 1
-            self.save_action_to_csv(CustomerActions.LEFT_AFTER_WAITING, 0, 0, 0)
+            self.perform_action(CustomerActions.LEFT_AFTER_WAITING, 0, 0, 0)
 
 
     def evaluateSpotReleaseForBonus(self):
@@ -158,13 +158,13 @@ class CustomerAgent(mesa.Agent):
 
     def attend_auction(self):
         bid = self.calculateBid()
-        self.save_action_to_csv(CustomerActions.BIDDED_FOR_SPOT, 0, 0, 0)
+        self.perform_action(CustomerActions.BIDDED_FOR_SPOT, 0, 0, 0)
         if(self.model.provider.attend_auction(self, bid)):
             #if self.state == CustomerState.CHARGING:
             if self in self.model.charging_station.occupied_spots:
-                self.save_action_to_csv(CustomerActions.PAYMENT_FOR_CHARGING, self.model.provider.current_provider_cut, self.model.provider.current_bid_fee - self.model.provider.current_provider_cut, 0)
+                self.perform_action(CustomerActions.PAYMENT_FOR_CHARGING, self.model.provider.current_provider_cut, self.model.provider.current_bid_fee - self.model.provider.current_provider_cut, 0)
                 self.model.number_of_customers += 1
-                self.save_action_to_csv(CustomerActions.STARTING_TO_CHARGE, 0, 0, 0)
+                self.perform_action(CustomerActions.STARTING_TO_CHARGE, 0, 0, 0)
                 self.state = CustomerState.CHARGING
                 return True
             else:
@@ -192,7 +192,7 @@ class CustomerAgent(mesa.Agent):
     def getSoc(self):
         return self.current_battery_level/self.battery_capacity
     
-    def save_action_to_csv(self, action, payment_to_provider, payment_to_customer, deltaWatthours):
+    def perform_action(self, action, payment_to_provider, payment_to_customer, deltaWatthours):
         if(self.model.doPrints):
-            print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id}: {action} with payment to provider: {payment_to_provider} and payment to customer: {payment_to_customer}')
+            print(f'{convert_time_to_string(self.model.schedule.time)}: Customer {self.unique_id} performed {action}')
         self.model.add_to_csv(action, self, payment_to_provider, payment_to_customer, deltaWatthours)
