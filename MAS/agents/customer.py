@@ -130,7 +130,6 @@ class CustomerAgent(mesa.Agent):
         if (self.evaluateSpotReleaseForBonusAuctionModel(earned_amount)):
             self.state = CustomerState.LEFT_STATION
             self.perform_action(CustomerActions.RELEASED_SPOT, 0, 0, 0)
-            self.perform_action(CustomerActions.PAYMENT_FOR_AUCTION, provider_cut, earned_amount, 0)
             return True
         else:
             self.perform_action(CustomerActions.REFUSED_TO_RELEASE, 0, 0, 0)
@@ -162,7 +161,7 @@ class CustomerAgent(mesa.Agent):
         if(self.model.provider.attend_auction(self, bid)):
             #if self.state == CustomerState.CHARGING:
             if self in self.model.charging_station.occupied_spots:
-                self.perform_action(CustomerActions.PAYMENT_FOR_CHARGING, self.model.provider.current_provider_cut, self.model.provider.current_bid_fee - self.model.provider.current_provider_cut, 0)
+                self.perform_action(CustomerActions.PAYMENT_FOR_AUCTION, self.model.provider.current_provider_cut, self.model.provider.current_bid_fee - self.model.provider.current_provider_cut, 0)
                 self.model.number_of_customers += 1
                 self.perform_action(CustomerActions.STARTING_TO_CHARGE, 0, 0, 0)
                 self.state = CustomerState.CHARGING
